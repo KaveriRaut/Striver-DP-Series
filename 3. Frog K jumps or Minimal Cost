@@ -1,0 +1,84 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+//find the minimum cost to reach the last stair (using K jumps like (i-1),(i-2),(i-3)...(i-k))
+//intuition : try recursion for min-cost among all possible K ways of each index i
+//for each stair => check all K possible jumps and select the minimum cost jump from all and store them and return
+
+class Solution
+{
+public:
+
+    //-------------------------Memoization:top down approach----------------------------//
+    int memo(vector<int> &height, int n, int k, vector<int> &dp) //TC:O(n*k) sc:O(n+n)->recursion stack + dp arr
+    {
+        // base case
+        if (n == 0)
+        {
+            return 0;
+        }
+        // check if already result of subproblem exists or not
+        if (dp[n] != -1)
+        {
+            return dp[n];
+        }
+        // now calculate the minimum of all the K jumps
+        int min_steps = INT8_MAX;
+        for (int i = 1; i <= k; i++)
+        {
+            if (n - i >= 0) //boundry condition of index is must to check
+            {
+                int jumps = memo(height, n - i, k, dp) + abs(height[n] - height[n - i]);
+                min_steps = min(jumps, min_steps);
+            }
+        }
+        return dp[n] = min_steps;
+    }
+    int memo_minimizeCost(vector<int> &height, int n, int k)
+    {
+        vector<int> dp(n, -1);
+        return memo(height, n - 1, k, dp);
+    }
+
+    //-------------------------Tabulation:bottom up----------------------------//
+    int tabu_minimizeCost(vector<int>& height, int n, int k) //TC:O(n*k) SC:O(n)->no recursion calls
+    {
+        vector<int> dp(n,-1);
+        dp[0] = 0;
+        //now check for all indexes from i=1 to n
+        for(int i=1;i<n;i++)
+        {
+            int min_steps = INT8_MAX;
+            //now for each index we will check K possible jumps
+            for(int j=1;j<=k;j++)
+            {
+                //check the lower index boundry
+                if(i-j>=0)
+                {
+                    int jumps = dp[i-j] + abs(height[i]-height[i-j]);
+                    min_steps = min(jumps,min_steps);
+                }
+            }
+            //store the min result that we got into dp
+            dp[i] = min_steps;
+        }
+        return dp[n-1];
+    }
+};
+
+
+int main()
+{
+    int N, K; // N=5 K=3
+    cin >> N >> K;
+    vector<int> arr(N); //10 30 40 50 20
+    for (int i = 0; i < N; i++)
+    {
+        cin >> arr[i];
+    }
+    Solution s;
+    cout<<"Memoization: "<<s.memo_minimizeCost(arr, N, K) << "\n";
+    cout<<"Tabulation: "<<s.tabu_minimizeCost(arr, N, K) << "\n";
+    return 0;
+}
