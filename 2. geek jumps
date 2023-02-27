@@ -1,0 +1,97 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+//intuition : try recursion for min-cost among all possible ways
+//for each stair=> check prev and prev-ka-prev both stairs with their jump-cost and select minimum out of them and return
+
+class Solution
+{
+public:
+    //-------------------------------Memoization:Top down-----------------------------//
+    int memo(vector<int> &height, int stair, vector<int> &dp) // TC:O(n) SC:O(n+n) =>dp[]+recc_stack
+    {
+        // base case
+        if (stair == 0)
+        {
+            return 0;
+        }
+        if (dp[stair] != -1)
+        {
+            return dp[stair];
+        }
+        // int leftCost = cost to reach prev-step reccCall + cost of jump from curr to prev-step
+        int leftCost = memo(height, stair - 1, dp) + abs(height[stair] - height[stair - 1]);
+
+        int rightCost = INT8_MAX;
+        if (stair > 1) // can jump 2 step back only if (stair>1)
+        {
+            // int rightCost = cost to reach prev-ka-prev-step reccCall + cost of jump from curr to prev-ka-prev-step
+            rightCost = memo(height, stair - 2, dp) + abs(height[stair] - height[stair - 2]);
+        }
+
+        return dp[stair] = min(leftCost, rightCost);
+    }
+    int memo_minEnergy(vector<int> &height, int stair)
+    {
+        vector<int> dp(stair + 1, -1);
+        return memo(height, stair - 1, dp);
+    }
+
+    //-------------------------------Tabulation:bottom up-----------------------------//
+    int minimumEnergy(vector<int> &height, int n) // TC:O(n) SC:O(n) //no reccursion
+    {
+        vector<int> dp(n + 1, -1);
+        dp[0] = 0;
+        dp[1] = abs(height[0] - height[1]);
+
+        for (int i = 2; i < n; i++)
+        {
+            // int leftCost = cost to reach prev-step reccCall + cost of jump from curr to prev-step
+            int leftCost = dp[i - 1] + abs(height[i] - height[i - 1]);
+            // int rightCost = cost to reach prev-ka-prev-step reccCall + cost of jump from curr to prev-ka-prev-step
+            int rightCost = dp[i - 2] + abs(height[i] - height[i - 2]);
+
+            dp[i] = min(leftCost, rightCost);
+        }
+
+        return dp[n - 1];
+    }
+
+    //-------------------------------Space optimization-----------------------------//
+    int opti_minimumEnergy(vector<int> &height, int n) // TC:O(n) SC:O(1)
+    {
+        int prev = 0;
+        int prev2 = 0;
+        for (int i = 1; i < n; i++)
+        {
+
+            int jumpTwo = INT8_MAX;
+            int jumpOne = prev + abs(height[i] - height[i - 1]);
+            if (i > 1)
+                jumpTwo = prev2 + abs(height[i] - height[i - 2]);
+
+            int cur_i = min(jumpOne, jumpTwo);
+            prev2 = prev;
+            prev = cur_i;
+        }
+        return prev;
+    }
+};
+
+int main()
+{
+    int t;
+    cin >> t;//6
+    vector<int> heights(t);//30 10 60 10 60 50
+    for (int i = 0; i < t; i++)
+    {
+        cin >> heights[i];
+    }
+    Solution s; //minimum energy required to reach end stair
+    cout<<"Memoization: "<<s.memo_minEnergy(heights, t) << "\n"; //40
+    cout<<"Tabulation: "<<s.minimumEnergy(heights, t) << "\n"; //40
+    cout<<"Optimization: "<<s.opti_minimumEnergy(heights, t) << "\n"; //40
+
+    return 0;
+}
