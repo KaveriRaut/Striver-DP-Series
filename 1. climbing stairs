@@ -1,0 +1,118 @@
+// Intuition : (pick and not pick) method of reccursion for counting all possible ways
+
+// to reach each step => need to take atleast 1 or 2 jumps before
+// base case : if we are on ground 0th stair => got success to reacch Nth stair => return 1 as got 1way
+// else if we are on 1st step => means we have only 1way to get their i.e. 1jump => this is 1way got to Nth stair 
+// write normal reccursion approach => modify it to DP solution 
+
+// Entire example is similar to 'fibonacci series' problem
+
+#include <iostream>
+#include <vector>
+#include <math.h>
+using namespace std;
+
+class Solution
+{
+    public: //to count total number of ways to reach the nth stair
+
+    //Reccursive Function => TC:O(2^n) SC:O(n)
+    int Rec_countWays(int stair)
+    {
+        //base case
+        if(stair==0)
+        {
+            return 1;
+        }
+        if(stair==1)
+        {
+            return 1;
+        }
+        //recursive call for prev and prev-prev stair jumps
+        int leftCall = Rec_countWays(stair-1);
+        int rightCall = Rec_countWays(stair-2);
+        
+        return leftCall+rightCall;
+    }
+
+    //-----------------------Memoization : top down-----------------------------------------//
+
+    int MOD = pow(10,9)+7;
+    int memoization(int stair,vector<int> &dp) // TC:O(n) SC:O(n)+rec_stakc_space
+    {
+        //base case
+        if(stair==0)
+        {
+            return dp[0]=1;
+        }
+        if(stair==1)
+        {
+            return dp[1]=1;
+        }
+        //check if result of subproblem exist already or not
+        if(dp[stair]!=-1)
+        {
+            return dp[stair];
+        }
+        //recursive call for prev and prev-prev stair jumps
+        int leftCall = memoization(stair-1,dp) % MOD;
+        int rightCall = memoization(stair-2,dp) % MOD;
+        
+        return dp[stair] = (leftCall+rightCall)%MOD;
+    }
+    //calling memoizaion method=>top down approach. 
+    int memo_countWays(int stair)
+    {
+        //max possible limit given for n stairs
+        vector<int> dp(stair+1,-1);
+        return memoization(stair,dp);
+    }
+
+    //-----------------------Tabulation: bottom up-----------------------------------------//
+
+    //Tabular method => bottom up approach => TC:O(n) SC:O(n)
+    int tabu_countWays(int stair)
+    {
+        //max possible limit given for n stairs
+        vector<int> dp(stair+1,-1);
+        
+        dp[0] = 1;
+        dp[1] = 1;
+        
+        for(int i=2;i<=stair;i++)
+        {
+            dp[i] = (dp[i-1]+dp[i-2]) %MOD;
+        }
+        
+        return dp[stair];
+    }
+
+    //-----------------------Space Optimization-----------------------------------------//
+    //space optimization method =>  TC:O(n) SC:O(1)
+    int opti_countWays(int stair)
+    {
+        int stair0 = 1;
+        int stair1 = 1;
+        
+        for(int i=2;i<=stair;i++)
+        {
+            int stair_next = (stair0 + stair1)%MOD;
+            stair0 = stair1;
+            stair1 = stair_next;
+        }
+        
+        return stair1%MOD;
+    }
+
+};
+
+
+int main()
+{
+    Solution s;
+    cout<<"Recursive: "<<s.Rec_countWays(4)<<endl;
+    cout<<"Memoization: "<<s.memo_countWays(4)<<endl;
+    cout<<"Tabulation: "<<s.tabu_countWays(4)<<endl;
+    cout<<"Optimization: "<<s.opti_countWays(4)<<endl;
+    return 0;
+}
