@@ -1,0 +1,98 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// houses arranged in circle => means 1st and last house are adjacent to each other so in reobbery they cant be together ever
+
+// Intution : 
+// initially just copy the given array into arr1 => except 1st house
+// and copy given array into arr2 => except last house
+// and final answer is max between both arrays answer
+// now apply same logic as previous example "max sum of non-adj subsequence" 
+
+//previous exaple algorithm approach :
+/*constraint is not to take adjacent elements in answer sequence
+// reccursion with pick and not pick option approach used here
+// for current index 2 choices =>
+// if (pick) = arr[curr_index] + rec_call(index-2) ; //call rec for prev of adj index not the previous index as curr index picked up
+// if(not pick) = 0 + rec_call(index-1); //as not picked curr_index so can call for adj (index-1) element
+// at end consider the max (pick, notpick); as answer
+*/
+
+class Solution {
+public:
+
+    //tabulation method findMaxSum() function => DP way => pick and notPick method
+    // Time : O(N)     // Space : O(N) -> space for dp[] and no rec Calls made
+
+    int findMaxSum(vector<int> &vec)
+    {
+        int n = vec.size();
+        //declare DP arr and fill the base case result in it to compute the further result
+        vector<int> dp(n,-1);
+        dp[0] = vec[0]; //****IMP
+        //now check each index
+        for(int idx=1;idx<n;idx++)
+        {
+            //idx is picked => so cant rec_call for (idx-1)so call for (idx-2)
+            int pick = vec[idx]; // .. + dp[idx-2]
+            if(idx>1) //lower boundry condition for idx
+            {
+                pick += dp[idx-2];
+            }
+            //if idx is not picked => call for (idx-1)
+            int notPick = 0 + dp[idx-1];
+            //store the max of pick and notPick
+            dp[idx] = max(pick, notPick);
+        }
+        return dp[n-1]; //required max from checking till last house index
+    }
+
+    //main function 
+    int rob(vector<int>& nums) 
+    {
+        int n = nums.size();
+        //edge case => if only 1 house to rob => ***IMP
+        if(n==1)
+        {
+            return nums[0];
+        }
+        //creating 2 seperate arrays
+        vector<int> arr1; //one for except first house
+        vector<int> arr2; //other for except last element house
+        //filling the arrays using given array
+        for(int i=0;i<n;i++)
+        {
+            if(i!=0)
+            {
+                arr1.push_back(nums[i]);
+            }
+            if(i!=n-1)
+            {
+                arr2.push_back(nums[i]);
+            }
+        }
+        //now calling the findMaxSum() function => 3 ways of writing it => reccursion/memoization/tabulation/optimization
+        int ans1 = findMaxSum(arr1);
+        int ans2 = findMaxSum(arr2);
+        //now find max out of these 2 ans1 and ans2 => return it as final answer
+        return max(ans1,ans2);
+    }
+};
+
+//input : nums = [2,3,2]
+//Output: 3
+//Explanation: You cannot rob house 1 (money = 2) and then rob house 3 (money = 2), because they are max money but still adjacent houses.
+int main()
+{
+    int n;
+    cin >> n;// 4
+    vector<int> arr(n); //1 2 3 1
+    for (int i = 0; i < n; i++)
+    {
+        cin >> arr[i];
+    }
+    Solution s; //answer => 4
+    cout <<"Tabulation way "<< s.rob(arr)  << "\n";
+    return 0;
+}
