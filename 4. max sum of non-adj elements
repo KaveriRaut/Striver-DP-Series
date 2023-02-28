@@ -1,0 +1,154 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+//Need to find the max sum of possible subsequence with no two elements adjecent in array
+// Intuition : constraint is not to take adjacent elements in answer sequence
+// reccursion with pick and not pick option approach used here
+// for current index 2 choices =>
+// if (pick) = arr[curr_index] + rec_call(index-2) ; //call rec for prev of adj index not the previous index as curr index picked up
+// if(not pick) = 0 + rec_call(index-1); //as not picked curr_index so can call for adj (index-1) element
+// at end consider the max (pick, notpick); as answer
+
+class Solution
+{
+public:
+    
+    //---------------------------------Reccursion--------------------------------------------//
+    //Simple Reccursion : reccurance relation using pick and notPick => TC:O(2^n) SC:O(n)
+    int reccurance(int *arr, int index)
+    {
+        //base case
+        if(index == 0)
+        {
+            return arr[index];
+        }
+        if(index < 0) //for negative index
+        {
+            return 0;
+        }
+        //during recursion calls => pick or notPick
+        //Pick
+        int pick = arr[index] ;
+        if(index>1 )
+        {
+            pick += reccurance(arr,index-2) ;
+        }//as picked curr index so skip adj (index-1) instead rec_call to (index-2)
+        //not Pick
+        int notPick = 0 + reccurance(arr,index-1) ; //as not picked current index so can rec_call (index-1)
+        //consider the max(pick,notPick) as answer
+        return max(pick, notPick);
+    }
+    // calculate the maximum sum with out adjacent
+    int rec_findMaxSum(int *arr, int n)
+    {
+       // vector<int> dp(n,-1);
+        return reccurance(arr,n-1);
+    }
+    
+    //---------------------------------Memoization--------------------------------------------//
+    // Memoization:top down approach => TC:O(n) SC:O(n)+O(n) fpr dpArr[] and rec_stack space
+    int memo(int *arr, int index, vector<int> &dp)
+    {
+        // base case
+        if (index == 0)
+        {
+            return arr[index];
+        }
+        if (index < 0) // for negative index
+        {
+            return 0;
+        }
+        // at first check if result present already in dp[]
+        if (dp[index] != -1)
+        {
+            return dp[index];
+        }
+        // during recursion calls => pick or notPick
+        // Pick
+        int pick = arr[index];
+        if (index > 1) //boundry condition checking is very important
+        {
+            pick += memo(arr, index - 2, dp);
+        } // as picked curr index so skip adj (index-1) instead rec_call to (index-2)
+        // not Pick
+        int notPick = 0 + memo(arr, index - 1, dp); // as not picked current index so can rec_call (index-1)
+        // consider the max(pick,notPick) as answer
+        return dp[index] = max(pick, notPick);
+    }
+    // calculate the maximum sum with out adjacent
+    int memo_findMaxSum(int *arr, int n)
+    {
+        vector<int> dp(n, -1);
+        return memo(arr, n - 1, dp);
+    }
+
+    //---------------------------------Tabulation--------------------------------------------//
+    // Tabulation: bottom up approach => TC:O(n) SC:O(n) only for dpArr[] , No rec stack
+    int tabu_findMaxSum(int *arr, int n)
+    {
+        vector<int> dp(n, -1);
+        // base case
+        dp[0] = arr[0];
+        int neg = 0; // if negative index got
+        // check for all the indexes and to find their result use previously found results without making recc-Calls
+        for (int idx = 1; idx < n; idx++)
+        {
+            // Pick
+            int pick = arr[idx];
+            if (idx > 1) //boundry condition checking is very important
+            {
+                pick += dp[idx - 2];
+            } // as picked curr index so skip adj (index-1) instead rec_call to (index-2)
+            // not Pick
+            int notPick = 0 + dp[idx - 1]; // as not picked current index so can rec_call (index-1)
+            // consider the max(pick,notPick) as answer
+            dp[idx] = max(pick, notPick);
+        }
+        return dp[n - 1];
+    }
+
+    //---------------------------------Space Optimization--------------------------------------------//
+    // Space optimization => suing 2 variables to store the (idx-1) and (idx-1) ke results for futher use
+    // TC: O(n)  SC:O(1) --> constant space
+    int opti_findMaxSum(int *arr, int n)
+    {
+        int prev = arr[0];
+        int prev2 = 0;
+        // check for all the indexes and to find their result use previously found results without making recc-Calls
+        for (int idx = 1; idx < n; idx++)
+        {
+            // Pick
+            int pick = arr[idx];
+            if (idx > 1)
+            {
+                pick += prev2;
+            } // as picked curr index so skip adj (index-1) instead rec_call to (index-2)
+            // not Pick
+            int notPick = 0 + prev; // as not picked current index so can rec_call (index-1)
+            // consider the max(pick,notPick) as answer
+            int curr_idx = max(pick, notPick);
+            // move forward by 1step all
+            prev2 = prev;
+            prev = curr_idx;
+        }
+        return prev;
+    }
+};
+
+int main()
+{
+    int n;
+    cin >> n;// 6
+    int arr[n]; //5 5 10 100 10 5
+    for (int i = 0; i < n; i++)
+    {
+        cin >> arr[i];
+    }
+    Solution s; //answer => idx [0,3,5] => 5+100+5=110
+    cout <<"Simple reccursion: "<< s.rec_findMaxSum(arr, n)  << "\n";
+    cout <<"Memoization: "<< s.memo_findMaxSum(arr, n)  << "\n";
+    cout <<"Tabulation: "<< s.tabu_findMaxSum(arr, n)  << "\n";
+    cout <<"Space optimization: "<< s.opti_findMaxSum(arr, n)  << "\n";
+    return 0;
+}
