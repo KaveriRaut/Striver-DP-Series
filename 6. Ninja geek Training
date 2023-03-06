@@ -1,0 +1,217 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// } Driver Code Ends
+
+// Intuition : main idea is "same task should not be done on 2 consecutive days"
+// so task options available to perform on currDay is except the lastTask done
+/*
+try doing the top-down approach first
+days consider as index here
+tasks are 0 to 3 => 3 means no task done yet
+//base case => day=0 then find the max score task that is not equal to lastTask and return it
+//else consition of day=> we have to pass the lastTask done to recursive call
+for currDay => find the max score task that is not equal to lastTask done
+add that score of currTask in sum and call for the next day with passing currtask that done
+*/
+
+class Solution
+{
+public:
+    // simple reccursion relation => time : O(n^3) -> for each day we have 3 options TLE
+    int func(int day, int lastTask, vector<vector<int>> &points)
+    {
+        int maxi = 0;
+        // base case
+        if (day == 0)
+        {
+            maxi = 0;
+            // check all the tasks on day0 => find the max scoring task but != to lastTask and return it
+            for (int task = 0; task < 3; task++)
+            {
+                if (task != lastTask)
+                {
+                    int score = points[day][task];
+                    maxi = max(maxi, score);
+                }
+            }
+            return maxi;
+        }
+
+        // during other days => reccursion
+        maxi = 0;
+        for (int task = 0; task < 3; task++)
+        {
+            if (task != lastTask)
+            {
+                // add the score of currTask done i.e points[day][task] and call for next day by passing currTask done
+                int score = points[day][task] + func(day - 1, task, points);
+                maxi = max(maxi, score);
+            }
+        }
+        return maxi;
+    }
+
+    int maximumPoints(vector<vector<int>> &points, int day)
+    {
+        // lastTask=3 means NO task done yet out of 0,1,2
+        return func(day - 1, 3, points);
+    }
+
+    //------------------------Memoization solution----------------------------------------
+    // Memoization=> time :  O(N*4*3) space : O(N) + O(N*4)
+    int func2(int day, int lastTask, vector<vector<int>> &points, vector<vector<int>> &dp)
+    {
+        int maxi = 0;
+        // base case
+        if (day == 0)
+        {
+            maxi = 0;
+            // check all the tasks on day0 => find the max scoring task but != to lastTask and return it
+            for (int task = 0; task < 3; task++)
+            {
+                if (task != lastTask)
+                {
+                    int score = points[day][task];
+                    maxi = max(maxi, score);
+                }
+            }
+            return maxi;
+        }
+        // memoization => pre-checking of subproblem result in dp[][]
+        if (dp[day][lastTask] != -1)
+        {
+            return dp[day][lastTask];
+        }
+        // during other days => reccursion
+        maxi = 0;
+        for (int task = 0; task < 3; task++)
+        {
+            if (task != lastTask)
+            {
+                // add the score of currTask done i.e points[day][task] and call for next day by passing currTask done
+                int score = points[day][task] + func2(day - 1, task, points, dp);
+                maxi = max(maxi, score);
+            }
+        }
+        return dp[day][lastTask] = maxi;
+    }
+
+    int maximumPoints2(vector<vector<int>> &points, int day)
+    {
+        vector<vector<int>> dp(day, vector<int>(4, -1));
+        // lastTask=3 means NO task done yet out of 0,1,2
+        return func2(day - 1, 3, points, dp);
+    }
+
+    //-------------------------------Tabulation method---------------------------------------
+    // Tabulation => time :  O(N*4*3)        space : O(N*4)
+    int maximumPoints3(vector<vector<int>> &points, int day)
+    {
+        vector<vector<int>> dp(day, vector<int>(4, -1));
+        // initially need to fill the results of base case in dp
+        // we have can have LastTask as 0 or 1 or 2 or 3 => leaving the lastTask performed find the max of remaining
+        // if lastTask == 0 then dp[0][0]=max(points[0][1], points[0][2]);
+        dp[0][0] = max(points[0][1], points[0][2]);
+        // if lastTask == 1 then dp[0][1]=max(points[0][0], points[0][2]);
+        dp[0][1] = max(points[0][0], points[0][2]);
+        // if lastTask == 2 then dp[0][2]=max(points[0][0], points[0][1]);
+        dp[0][2] = max(points[0][0], points[0][1]);
+        // if lastTask == 3 then dp[0][3]=max(points[0][0] ,points[0][1], points[0][2]);
+        dp[0][3] = max(points[0][0], max(points[0][1], points[0][2]));
+
+        // now by using prior results in dp for day0 =>try to find out next days results using that
+        for (int currDay = 1; currDay < day; currDay++)
+        {
+            for (int lastTask = 0; lastTask < 4; lastTask++)
+            {
+                dp[currDay][lastTask] = 0;
+                // for each day we have 3 task but with 4 options
+                for (int task = 0; task < 3; task++)
+                {
+                    if (task != lastTask)
+                    {
+                        int score = points[currDay][task] + dp[currDay - 1][task];
+                        dp[currDay][lastTask] = max(dp[currDay][lastTask], score);
+                    }
+                }
+            }
+        }
+
+        return dp[day - 1][3];
+    }
+
+    //----------------------Space optimization------------------------------------------------------------
+    // Space optimization => time :  O(N*4*3)        Space : O(4)
+    int maximumPoints4(vector<vector<int>> &points, int day)
+    {
+        vector<int> dp(day, -1);
+        // maintain only 1D array of previous day scores
+        dp[0] = max(points[0][1], points[0][2]);
+        dp[1] = max(points[0][0], points[0][2]);
+        dp[2] = max(points[0][0], points[0][1]);
+        dp[3] = max(points[0][0], max(points[0][1], points[0][2]));
+
+        // now by using prior results in dp for day0 =>try to find out next days results using that
+        for (int currDay = 1; currDay < day; currDay++)
+        {
+            vector<int> vec(4, 0);
+            for (int lastTask = 0; lastTask < 4; lastTask++)
+            {
+                vec[lastTask] = 0;
+                // for each day we have 3 task but with 4 options
+                for (int task = 0; task < 3; task++)
+                {
+                    if (task != lastTask)
+                    {
+                        vec[lastTask] = max(vec[lastTask], points[currDay][task] + dp[task]);
+                    }
+                }
+            }
+            dp = vec; // IMP to copy vector back
+        }
+
+        return dp[3];
+    }
+};
+
+// Driver Code Starts.
+int main()
+{
+
+    int n;
+    cin >> n;
+    vector<vector<int>> points;
+    for (int i = 0; i < n; ++i)
+    {
+        vector<int> temp;
+        for (int j = 0; j < 3; ++j)
+        {
+            int x;
+            cin >> x;
+            temp.push_back(x);
+        }
+        points.push_back(temp);
+    }
+
+    Solution s;
+    cout << "Simple Reccursion: " << s.maximumPoints(points, n) << endl;
+    cout << "Memoization " << s.maximumPoints2(points, n) << endl;
+    cout << "Tabulation: " << s.maximumPoints3(points, n) << endl;
+    cout << "Space Optimization: " << s.maximumPoints4(points, n) << endl;
+
+    return 0;
+}
+
+/*testcase
+3
+1 2 5
+3 1 1
+3 3 3
+
+Simple Reccursion: 11
+Memoization 11
+Tabulation: 11
+Space Optimization: 11
+*/
