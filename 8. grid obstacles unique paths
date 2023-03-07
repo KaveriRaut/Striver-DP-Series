@@ -1,0 +1,218 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+
+//This problem is same extension of previous grid path problem with 1 exta base case handling
+// only focus on extra condition and number of rows and cols given but time and space complexity are same
+//IMP remember
+// here 0 => empty cell => can pass through
+// here 1 => obstacle => can not pass through it
+
+class Solution
+{
+public:
+    int MOD = 7 + 1e9;
+    // reccursion with top-down approach means start with last cell and try to reach 1st cell [0,0] => means have only option to move left or up direction
+    //-------------------------Simple reccurance relation--------------------------------------//
+    // Time : O(2^(m*n))  space : O(m+n) + O(m*n) => O(length of path) + O(recc stack space)
+    int recc(int row, int col, vector<vector<int>> &grid)
+    {
+        // base case
+        if (row < 0 || col < 0) // invalid boundry condition => return 0
+        {
+            return 0;
+        }
+        if (row == 0 && col == 0 && grid[row][col] == 0) // got the required desti. cell and it has 0 in it as valid => return 1
+        {
+            return 1;
+        }
+        // extra condition for obstacles handling => if cell indexes are valid but cell contain 1 means cant go ahead => return 0
+        if (grid[row][col] == 1)
+        {
+            return 0;
+        }
+        // now for reccursive call for finding all possible paths
+        int up = recc(row - 1, col, grid);
+        int left = recc(row, col - 1, grid);
+        return (up + left) % MOD; // as we want count of all possible paths
+    }
+    int totalWays1(int n, int m, vector<vector<int>> &grid)
+    {
+        return recc(n - 1, m - 1, grid);
+    }
+
+    //-------------------------Memoization--------------------------------------//
+    // Time : O(m*n)  space : O(m+n) + O(m*n) => O(length of path) + O(recc stack space)
+    int memo(int row, int col, vector<vector<int>> &grid, vector<vector<int>> &dp)
+    {
+        // base case
+        if (row < 0 || col < 0) // invalid boundry condition => return 0
+        {
+            return 0;
+        }
+        if (row == 0 && col == 0 && grid[row][col] == 0) // got the required desti. cell and it has 0 in it as valid => return 1
+        {
+            return 1;
+        }
+        // extra condition for obstacles handling => if cell indexes are valid but cell contain 1 means cant go ahead => return 0
+        if (grid[row][col] == 1)
+        {
+            return 0;
+        }
+        // now first check if result present in dp or not=> if yes then return it result
+        if (dp[row][col] != -1)
+        {
+            return dp[row][col];
+        }
+        // now for reccursive call for finding all possible paths
+        int up = memo(row - 1, col, grid, dp);
+        int left = memo(row, col - 1, grid, dp);
+        return dp[row][col] = (up + left) % MOD; // as we want count of all possible paths
+    }
+
+    int totalWays2(int n, int m, vector<vector<int>> &grid)
+    {
+        vector<vector<int>> dp(n, vector<int>(m, -1));
+        return memo(n - 1, m - 1, grid, dp);
+    }
+
+    //-------------------------Tabulation--------------------------------------//
+    // for bottom-up approach we will move from [0,0] cell to last [m-1][n-1] cell
+    // Time : O(m*n)  space : O(m*n) => O(length of path)
+    int Tabulation(int n, int m, vector<vector<int>> &grid)
+    {
+        vector<vector<int>> dp(n, vector<int>(m, -1));
+        // with edge case if start or final cell is 1 means obstacle
+        if (grid[0][0] == 1 || grid[n - 1][m - 1] == 1)
+        {
+            return 0;
+        }
+        // initially base case results stored in dp to use in future
+        dp[0][0] = 1;
+
+        // traverse all the cells and try to find path possible
+        for (int row = 0; row < n; row++)
+        {
+            for (int col = 0; col < m; col++)
+            {
+                // base case
+                // obstacle case : if got 1 as obstacle => store 0 in dp at its place
+                if (grid[row][col] == 1)
+                {
+                    dp[row][col] = 0;
+                }
+                // else if got the required cell and has 0 in it => store 1 in dp
+                else if (row == 0 && col == 0 && grid[row][col] == 0)
+                {
+                    dp[row][col] = 1;
+                }
+                else // else if (cell is not obstacle also not required finnal cell => so need to check other possibles)
+                {
+                    int left = 0;
+                    int up = 0;
+                    if (col > 0)
+                    {
+                        left = dp[row][col - 1];
+                    }
+                    if (row > 0)
+                    {
+                        up = dp[row - 1][col];
+                    }
+                    // IMP to store these result into dp
+                    dp[row][col] = (left + up) % MOD;
+                }
+            }
+        }
+        return dp[n - 1][m - 1];
+    }
+
+    //-------------------------Space Optimization--------------------------------------//
+    // here we require only single 1D array of previous row ke result ka.
+    // and current row ke liye temp 1D array create karo using that previous single array and at end of processing the current row ...
+    // just copy back the temp arr into previous array
+    // Time : O(m*n)  space : O(n) => O(no. of element in 1 row)
+    // for bottom-up approach we will move from [0,0] cell to last [m-1][n-1] cell
+    int optimized(int m, int n, vector<vector<int>> &grid)
+    {
+        // creating the 1D dp[n] matrix to store the results
+        vector<int> prev_dp(m, 0); // prev_dp[n] initilize with 0 first
+        // traverse the entire matrix and find current row ke results by using the prev_row ke results
+        for (int row = 0; row < n; row++)
+        {
+            vector<int> curr_temp(m, 0); // 1D array for finding and storing curr_row ke result
+            for (int col = 0; col < m; col++)
+            {
+                //check base case=>
+                //if obstacle 1 got dont do anything just continue
+                if(grid[row][col]==1) //obstacle
+                {
+                    continue;
+                } 
+                //if got the required first cell => check it dont have obstacle
+                if (row == 0 && col == 0 && grid[row][col]==0)
+                {
+                    curr_temp[col] = 1;
+                    continue;
+                }
+                // now with checking the boundry condition and using the previously stored result calculate new results
+                int leftMove = 0;
+                int upMove = 0;
+                if (col > 0) // with checking the boundry condition
+                {
+                    leftMove = curr_temp[col - 1]%MOD;
+                }
+                if (row > 0) // with checking the boundry condition
+                {
+                    upMove = prev_dp[col]%MOD;
+                }
+                // store the curr row ke results in temp
+                curr_temp[col] = leftMove + upMove;
+            }
+            // copy back the
+            prev_dp = curr_temp; // IMP to copy back the temp and prev 1D arrays
+        }
+        return prev_dp[m - 1];
+    }
+
+
+};
+
+// Driver Code Starts.
+int main()
+{
+    int n, m;
+    cin >> n >> m;
+    vector<vector<int>> grid;
+    for (int i = 0; i < n; ++i)
+    {
+        vector<int> temp;
+        for (int i = 0; i < m; ++i)
+        {
+            int x;
+            cin >> x;
+            temp.push_back(x);
+        }
+        grid.push_back(temp);
+    }
+
+    Solution obj;
+    cout << "Simple Reccursion:" << obj.totalWays1(n, m, grid) << "\n";
+    cout << "Memoization:" << obj.totalWays2(n, m, grid) << "\n";
+    cout << "Tabulation:" << obj.Tabulation(n, m, grid) << "\n";
+    cout << "Space Optimization:" << obj.Tabulation(n, m, grid) << "\n";
+
+    return 0;
+}
+
+/*
+testcase 
+3 3
+0 0 0
+0 1 0
+0 0 0
+
+output: 2 
+2 ways only possible considering the 1 as obstacle in matrix
+
+*/
