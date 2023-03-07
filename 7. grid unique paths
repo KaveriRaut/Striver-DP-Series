@@ -1,0 +1,173 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// We have to reach last cell from 1st cell with =>constraint : can move right or down only
+/*Intutition :
+1. consider the index as cell[row][col]
+2. initially using top-down approach => we started with last desti. cell and trying to reach the first [0,0] cell
+3. so now in last to first cell journey => we can move only left or up direction as per change condition as per constraint
+*/
+
+class Solution
+{
+public:
+    //-------------------------Simple reccurance relation--------------------------------------//
+    // Time : O(2^(m*n))  space : O(m+n) + O(m*n) => O(length of path) + O(recc stack space)
+    int recc(int row, int col)
+    {
+        // base case
+        // if reached the 1st cell required
+        if (row == 0 && col == 0)
+        {
+            return 1;
+        }
+        // if we go out of boundry
+        if (row < 0 || col < 0)
+        {
+            return 0;
+        }
+        // reccursive calls to reach 1st cell by all paths possible
+        int leftMove = recc(row, col - 1);
+        int upMove = recc(row - 1, col);
+        // as we want to count all the possible paths so return (left+up)
+        return (leftMove + upMove);
+    }
+    // Function to find total number of unique paths.
+    int NumberOfPath(int m, int n)
+    {
+        cout << "Simple Reccursion: " << recc(m - 1, n - 1) << endl;
+    }
+
+    //-------------------------Memoization--------------------------------------//
+    // Time : O(m*n)  space : O(m+n) + O(m*n) => O(length of path) + O(recc stack space)
+    int memoize(int row, int col, vector<vector<int>> &dp)
+    {
+        // base case
+        // if reached the 1st cell required
+        if (row == 0 && col == 0)
+        {
+            return 1;
+        }
+        // if we go out of boundry
+        if (row < 0 || col < 0)
+        {
+            return 0;
+        }
+        // firstly check if result already exists in dp or not
+        if (dp[row][col] != -1)
+        {
+            return dp[row][col];
+        }
+        // reccursive calls to reach 1st cell by all paths possible
+        int leftMove = memoize(row, col - 1, dp);
+        int upMove = memoize(row - 1, col, dp);
+        // as we want to count all the possible paths so return (left+up)
+        // store the result in dp during return
+        return dp[row][col] = (leftMove + upMove);
+    }
+
+    // Function to find total number of unique paths.
+    void NumberOfPath2(int m, int n)
+    {
+        // creating the 2D dp[m][n] matrix to store the results
+        vector<vector<int>> dp(m, vector<int>(n, -1)); // m*n initilize with -1
+        cout << "Memoization: " << memoize(m - 1, n - 1, dp) << endl;
+    }
+
+    //-------------------------Tabulation--------------------------------------//
+    // for bottom-up approach we will move from [0,0] cell to last [m-1][n-1] cell
+    // Time : O(m*n)  space : O(m*n) => O(length of path)
+    int Tabulation(int m, int n)
+    {
+        // creating the 2D dp[m][n] matrix to store the results
+        vector<vector<int>> dp(m, vector<int>(n, -1)); // m*n initilize with -1
+        // initially store the results of base case directly
+        dp[0][0] = 0;
+        // traverse the entire matrix and find current result by using the results from stored dp
+        for (int row = 0; row < m; row++)
+        {
+            for (int col = 0; col < n; col++)
+            {
+                // check base case=>just do nothing and continue then
+                if (row == 0 && col == 0)
+                {
+                    dp[row][col] = 1;
+                    continue;
+                }
+                // now with checking the boundry condition and using the previously stored result calculate new results
+                int leftMove = 0;
+                int upMove = 0;
+                if (col > 0) // with checking the boundry condition
+                {
+                    leftMove = dp[row][col - 1];
+                }
+                if (row > 0) // with checking the boundry condition
+                {
+                    upMove = dp[row - 1][col];
+                }
+
+                dp[row][col] = leftMove + upMove;
+            }
+        }
+        return dp[m - 1][n - 1];
+    }
+
+    //-------------------------Space Optimization--------------------------------------//
+    // here we require only single 1D array of previous row ke result ka.
+    // and current row ke liye temp 1D array create karo using that previous single array and at end of processing the current row ...
+    // just copy back the temp arr into previous array
+    // Time : O(m*n)  space : O(n) => O(no. of element in 1 row)
+    // for bottom-up approach we will move from [0,0] cell to last [m-1][n-1] cell
+    int optimized(int m, int n)
+    {
+        // creating the 1D dp[n] matrix to store the results
+        vector<int> prev_dp(n, 0); // prev_dp[n] initilize with 0 first
+        // traverse the entire matrix and find current row ke results by using the prev_row ke results
+        for (int row = 0; row < m; row++)
+        {
+            vector<int> curr_temp(n, 0); // 1D array for finding and storing curr_row ke result
+            for (int col = 0; col < n; col++)
+            {
+                // check base case=>just do nothing and continue then
+                if (row == 0 && col == 0)
+                {
+                    curr_temp[col] = 1;
+                    continue;
+                }
+                // now with checking the boundry condition and using the previously stored result calculate new results
+                int leftMove = 0;
+                int upMove = 0;
+                if (col > 0) // with checking the boundry condition
+                {
+                    leftMove = curr_temp[col - 1];
+                }
+                if (row > 0) // with checking the boundry condition
+                {
+                    upMove = prev_dp[col];
+                }
+                // store the curr row ke results in temp
+                curr_temp[col] = leftMove + upMove;
+            }
+            // copy back the
+            prev_dp = curr_temp; // IMP to copy back the temp and prev 1D arrays
+        }
+        return prev_dp[n - 1];
+    }
+};
+
+// Driver Code Starts.
+int main()
+{
+    // taking dimensions of the matrix
+    int a, b;
+    cin >> a >> b;
+    Solution ob;
+    ob.NumberOfPath(a, b);
+    ob.NumberOfPath2(a, b);
+    cout << "Tabulation: " << ob.Tabulation(a, b) << endl;
+    cout << "Space Optimization: " << ob.optimized(a, b) << endl;
+}
+
+//testcase m=2 n=2 answer = 2
+//testcase m=3 n=7 answer = 28
