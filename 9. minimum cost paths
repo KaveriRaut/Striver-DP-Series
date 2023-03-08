@@ -1,0 +1,220 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// only 2 moves possible i.e. to right and to down
+
+// problem is similar to 'all grid path' only we need to find min-path cost here instead of count of no. of paths
+// so slight modification is that we will return the currValue grid[i][j] so to add to path sum
+// but to discard the path will return INT_Max value so it is not considered
+
+class Solution
+{
+public:
+    // reccursion with top-down approach means start with last cell and try to reach 1st cell [0,0] => means have only option to move left or up direction
+    //-------------------------Simple reccurance relation--------------------------------------//
+    // Time : O(2^(m*n))  space : O(m+n) + O(m*n) => O(length of path) + O(recc stack space)
+
+    // reccursive function => top-down approach  => Time:O(2^(n*m)) Space:O(path length)+O(recc_stack) =>> path length = (n-1)+(m-1)
+    // we have started from last cell and try to reach the first cell by moves of up and left only
+    int recc(int row, int col, vector<vector<int>> &grid)
+    {
+        // base case
+        if (row == 0 && col == 0) // got first desti. cell
+        {
+            return grid[row][col]; // returning the curr Grid value => as we want to calculate path cost
+        }
+        if (row < 0 || col < 0) // invalid boundry condition => return INT_MAX as we want to discard this path and dont want to add to result
+        {
+            return 1e9;
+        }
+
+        // now 2 recursive moves for each cell possible
+        int left = grid[row][col] + recc(row, col - 1, grid);
+        int up = grid[row][col] + recc(row - 1, col, grid);
+
+        return min(left, up); // min path cost to return
+    }
+
+    // Function to return the minimum cost to react at bottom right cell from top left cell.
+    int minPathSum0(vector<vector<int>> &grid)
+    {
+        int n = grid.size();    // rows
+        int m = grid[0].size(); // cols
+        return recc(n - 1, m - 1, grid);
+    }
+
+    //-------------------------Memoization--------------------------------------//
+    // Time : O(m*n)  space : O(m+n) + O(m*n) => O(length of path) + O(recc stack space)
+    int recc(int row, int col, vector<vector<int>> &grid, vector<vector<int>> &dp)
+    {
+        // base case
+        if (row == 0 && col == 0) // got first desti. cell
+        {
+            return grid[row][col]; // returning the curr Grid value => as we want to calculate path cost
+        }
+        if (row < 0 || col < 0) // invalid boundry condition => return INT_MAX as we want to discard this path and dont want to add to result
+        {
+            return 1e9;
+        }
+
+        // extra condition checking for memoization => check result in dp first
+        if (dp[row][col] != -1)
+        {
+            return dp[row][col];
+        }
+
+        // now 2 recursive moves for each cell possible
+        int left = grid[row][col] + recc(row, col - 1, grid, dp);
+        int up = grid[row][col] + recc(row - 1, col, grid, dp);
+
+        return dp[row][col] = min(left, up); // min path cost to return
+    }
+    int minPathSum1(vector<vector<int>> &grid)
+    {
+        int n = grid.size();                           // rows
+        int m = grid[0].size();                        // cols
+        vector<vector<int>> dp(n, vector<int>(m, -1)); // dp of grid for memoization
+        return recc(n - 1, m - 1, grid, dp);
+    }
+
+    //-------------------------Tabulation--------------------------------------//
+    // for bottom-up approach we will move from [0,0] cell to last [m-1][n-1] cell
+    // Time : O(m*n)  space : O(m*n) => O(length of path)
+    int minPathSum2(vector<vector<int>> &grid)
+    {
+        int n = grid.size();                          // rows
+        int m = grid[0].size();                       // cols
+        vector<vector<int>> dp(n, vector<int>(m, 0)); // dp of grid for tabulation initialize with 0 all
+
+        for (int row = 0; row < n; row++)
+        {
+            for (int col = 0; col < m; col++)
+            {
+                // base case desti. reached
+                if (row == 0 && col == 0)
+                {
+                    dp[row][col] = grid[row][col];
+                }
+                else // otherwise
+                {
+                    // find left and up move ki values but along with checking conditions
+
+                    int left = grid[row][col];
+                    if (col > 0)
+                    {
+                        left += dp[row][col - 1];
+                    } // valid and want to add path to resultant
+                    else
+                    {
+                        left += 1e9;
+                    } // invalid and dont want to add path to resultant
+
+                    int up = grid[row][col];
+                    if (row > 0)
+                    {
+                        up += dp[row - 1][col];
+                    } // valid and want to add
+                    else
+                    {
+                        up += 1e9;
+                    } // invalid and dont want to add
+
+                    dp[row][col] = min(left, up); // store the min path value into dp
+                }
+            }
+        }
+        return dp[n - 1][m - 1];
+    }
+
+    //-------------------------Space Optimization--------------------------------------//
+    // here we require only single 1D array of previous row ke result ka.
+    // and current row ke liye temp 1D array create karo using that previous single array and at end of processing the current row ...
+    // just copy back the temp arr into previous array
+    // Time : O(m*n)  space : O(n) => O(no. of element in 1 row)
+    // for bottom-up approach we will move from [0,0] cell to last [m-1][n-1] cell
+    int minPathSum3(vector<vector<int>> &grid)
+    {
+        int n = grid.size();    // rows
+        int m = grid[0].size(); // cols
+
+        // for each row processing => prev_dp[] 1D dp maintain
+        vector<int> prev_dp(m, 0); // 1D dp for tabulation initialize with 0 all
+        for (int row = 0; row < n; row++)
+        {
+            // for each col processing in each curr row => curr[] 1D dp maintain
+            vector<int> curr(m, 0);
+
+            for (int col = 0; col < m; col++)
+            {
+                // base case desti. reached
+                if (row == 0 && col == 0)
+                {
+                    curr[col] = grid[row][col];
+                }
+                else // otherwise
+                {
+                    // find left and up move ki values but along with checking conditions
+
+                    int left = grid[row][col]; // left move in curr[]
+                    if (col > 0)
+                    {
+                        left += curr[col - 1];
+                    } // valid and want to add path to resultant
+                    else
+                    {
+                        left += 1e9;
+                    } // invalid and dont want to add path to resultant
+
+                    int up = grid[row][col]; // up move to prev_dp[]
+                    if (row > 0)
+                    {
+                        up += prev_dp[col];
+                    } // valid and want to add
+                    else
+                    {
+                        up += 1e9;
+                    } // invalid and dont want to add
+
+                    // store into curr[] ke col. me daalo ke rakho
+                    curr[col] = min(left, up); // store the min path value into dp
+                }
+            }
+            // VVVIMP to copy back the curr[] into prev_dp[] for further rows and col processing
+            prev_dp = curr;
+        }
+        return prev_dp[m - 1];
+    }
+};
+
+//Driver Code Starts.
+int main()
+{
+
+    int n;
+    cin >> n;
+    vector<vector<int>> grid(n, vector<int>(n, -1));
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            cin >> grid[i][j];
+        }
+    }
+    Solution obj;
+    cout<< "Simple reccursion: " << obj.minPathSum0(grid) << "\n";
+    cout<< "Memoization: " << obj.minPathSum1(grid) << "\n";
+    cout<< "Tabulation: " << obj.minPathSum2(grid) << "\n";
+    cout<< "Space Optimization: " << obj.minPathSum3(grid) << "\n";
+
+    return 0;
+}
+
+/*
+testcase: n=m=3
+3
+1 3 1
+1 5 1
+4 2 1
+
+o/p = 7
+*/
