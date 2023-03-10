@@ -1,0 +1,217 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Here we have variable starting and ending cells
+// In such cases => will start from last desti. cells and try to reach 1st row
+// initial call will be made for all the cells in last row => and return max out of them
+
+class Solution
+{
+public:
+    //-------------------------Simple reccurance relation--------------------------------------//
+    // reccursion with top-down approach means start with last cell and try to reach 1st cell [0,0] => means have only option to move left or up direction
+    // Simple reccursive algorithm => Time:O(2^(n*m))    Space:O(n)->recc stack space
+    // we are finding all the paths reaching the last cell[i][j] => moves allowed will be now up, leftUp, rightUp
+    // going from [n-1]th row to [0]th row
+    int ReccFunc(int i, int j, vector<vector<int>> &Matrix, int N)
+    {
+        // base case
+        // side boundry exceding condition
+        if (j < 0 || j > N)
+        {
+            return -1e8; // want to discard this path in max path example => so return min value
+        }
+        // if we reached the destination row i.e. 1st row
+        if (i == 0)
+        {
+            return Matrix[0][j]; // return the actual value so to add it to resultant path
+        }
+        // now calling reccursion for each cell to try out all the paths using all 3 moves and return max of them
+        int up = Matrix[i][j] + ReccFunc(i - 1, j, Matrix, N);
+        int leftUp = Matrix[i][j] + ReccFunc(i - 1, j - 1, Matrix, N);
+        int rightUp = Matrix[i][j] + ReccFunc(i - 1, j + 1, Matrix, N);
+
+        return max(up, max(leftUp, rightUp));
+    }
+    // as variable desti and src cells => calling reccursion for all cells from last (n-1)th row and try to reach 1st cell [0,0] for all calls
+    int maximumPath(int N, vector<vector<int>> Matrix)
+    {
+        int maxi = -1e8;
+        // finding maximum path that can end at any of cells in last row
+        for (int j = 0; j < N; j++) // initial call for all cells in last row
+        {
+            maxi = max(maxi, ReccFunc(N - 1, j, Matrix, N));
+        }
+        return maxi;
+    }
+
+    // Memoization (top-down approach) => Time:O(n*m)    Space:O(n*m)+O(n)->dp space+recc stack space
+    // going from cell of [n-1]th row to any cell from [0]th row
+    int ReccFunc2(int i, int j, vector<vector<int>> &Matrix, int N, vector<vector<int>> &dp)
+    {
+        // base case
+        // side boundry exceding condition
+        if (j < 0 || j >= N)
+        {
+            return INT_MIN; // want to discard this path in max path example => so return min value
+        }
+        // if we reached the destination row i.e. 1st row
+        if (i == 0)
+        {
+            return Matrix[0][j]; // return the actual value so to add it to resultant path
+        }
+        // Pre-checking of dp for result
+        if (dp[i][j] != -1)
+        {
+            return dp[i][j];
+        }
+        // now calling reccursion for each cell to try out all the paths using all 3 moves and return max of them
+        int up = Matrix[i][j] + ReccFunc2(i - 1, j, Matrix, N, dp);
+        int leftUp = Matrix[i][j] + ReccFunc2(i - 1, j - 1, Matrix, N, dp);
+        int rightUp = Matrix[i][j] + ReccFunc2(i - 1, j + 1, Matrix, N, dp);
+
+        return dp[i][j] = max(up, max(leftUp, rightUp));
+    }
+    int maximumPath2(int N, vector<vector<int>> Matrix)
+    {
+        int maxi = INT_MIN;
+        // maintain the 2D dp[][]  for memoization
+        vector<vector<int>> dp(N, vector<int>(N, -1)); // common for all calls
+        // finding maximum path that can end at any of cells in last row
+        for (int j = 0; j < N; j++) // initial call for all cells in last row
+        {
+            maxi = max(maxi, ReccFunc2(N - 1, j, Matrix, N, dp));
+        }
+        return maxi;
+    }
+
+    // Tabulation (bottom-up approach) => Time:O(n*m)    Space:O(n*m)->only dp space
+    // now here we fill the dp table in opposite manner than the memoization way
+    // we will fill the top rows first and then using those results will try to find next rows ka results
+    // going filling from 0th row to (n-1)th row
+
+    int maximumPath3(int N, vector<vector<int>> Matrix)
+    {
+        // maintain the 2D dp[][] for tabulation
+        vector<vector<int>> dp(N, vector<int>(N, 0)); // initialize with 0 to all
+        // filling the 0th row as base case in dp[][]
+        for (int j = 0; j < N; j++)
+        {
+            dp[0][j] = Matrix[0][j];
+        }
+        // now fill next rows from 1st row to (n-1)th row
+        for (int i = 1; i < N; i++)
+        {
+            for (int j = 0; j < N; j++)
+            {
+                // here have to check boundry condition IMP before adding that path to result or not
+                int up = Matrix[i][j] + dp[i - 1][j];
+
+                int leftUp = Matrix[i][j];
+                if (j - 1 >= 0)
+                {
+                    leftUp += dp[i - 1][j - 1];
+                }
+                else
+                {
+                    leftUp += INT_MIN;
+                }
+
+                int rightUp = Matrix[i][j];
+                if (j + 1 < N)
+                {
+                    rightUp += dp[i - 1][j + 1];
+                }
+                else
+                {
+                    rightUp += INT_MIN;
+                }
+
+                dp[i][j] = max(up, max(leftUp, rightUp));
+            }
+        }
+
+        int maxi = INT_MIN;
+        // finding maximum path that can end at any of cells in last row
+        for (int j = 0; j < N; j++) // initial call for all cells in last row
+        {
+            maxi = max(maxi, dp[N - 1][j]);
+        }
+        return maxi;
+    }
+
+    // Space Optimization (bottom-up approach) => Time:O(n*m)    Space:O(n)->only 1D array space
+    // here we require only single 1D array of previous row ke result ka.
+    // and current row ke liye temp 1D array create karo using that previous single array and at end of processing the current row ...
+    // just copy back the temp arr into previous array
+    // for bottom-up approach we will move from 0th row to last [n-1]th row
+    int maximumPath4(int N, vector<vector<int>> Matrix)
+    {
+        //maintain the 2D dp[][] for tabulation
+        vector<int> prev(N,0); //initialize with 0 to all
+        //filling the 0th row as base case in dp[][]
+        for(int j=0;j<N;j++)
+        {
+            prev[j] = Matrix[0][j];
+        }
+        //now fill next rows from 1st row to (n-1)th row
+        for(int i=1;i<N;i++)
+        {
+            vector<int> curr(N,0);
+            for(int j=0;j<N;j++)
+            {
+                //here have to check boundry condition IMP before adding that path to result or not
+                int up = Matrix[i][j] + prev[j];
+                
+                int leftUp = Matrix[i][j];
+                if(j-1>=0) { leftUp += prev[j-1]; }
+                else { leftUp += INT_MIN ; }
+                
+                int rightUp = Matrix[i][j];
+                if(j+1<N) { rightUp += prev[j+1]; }
+                else { rightUp += INT_MIN; }
+    
+                curr[j] = max(up,max(leftUp,rightUp));
+            }
+            prev = curr; //****IMP to copy back the curr to prev
+        }
+        
+        int maxi = INT_MIN;
+        //finding maximum path that can end at any of cells in last row
+        for(int j=0;j<N;j++) //initial call for all cells in last row
+        {
+            maxi = max(maxi, prev[j]);
+        }
+        return maxi;
+    }
+};
+
+// Driver Code Starts.
+int main()
+{
+    int N;
+    cin >> N;
+    vector<vector<int>> Matrix(N, vector<int>(N, 0));
+    for (int i = 0; i < N * N; i++)
+        cin >> Matrix[(i / N)][i % N];
+
+    Solution ob;
+    cout << "Simmple Reccursion: " << ob.maximumPath(N, Matrix) << "\n";
+    cout << "Memoization: " << ob.maximumPath(N, Matrix) << "\n";
+    cout << "Tabulation: " << ob.maximumPath(N, Matrix) << "\n";
+    cout << "Space Optimization: " << ob.maximumPath(N, Matrix) << "\n";
+
+    return 0;
+}
+
+/*
+testcase : 
+N = 4
+
+1 2 10 4
+100 3 2 1
+1 1 20 2
+1 2 2 1
+
+output : 105
+*/
