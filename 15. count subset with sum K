@@ -1,0 +1,178 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+
+// Intuition:
+// we have to count all the subsets whos sum==target given
+// in Reccursion =>
+// if base condition fulfilled => return 1; ->count that path
+// else return 0; -> not to count that path
+// for all other reccursive calls => sum up them all and return back;
+
+class Solution
+{
+
+public:
+    int MOD = 7 + 1e9;
+
+    //Reccursion : Time:O(2^n)   Space:O(n) -> rec. stack space
+    int RecFun(int arr[], int target, int idx)
+    {
+        // base case
+        if (target == 0)
+        {
+            return 1; // consider in count
+        }
+
+        if (idx == 0)
+        {
+            if (arr[idx] == target)
+                return 1; // consider in count
+            else
+                return 0; // not to consider in count
+        }
+        // during other recursive call => sum them up and return that count
+        int notpick = RecFun(arr, target, idx - 1) % MOD; // target remain same in notpick case
+        int pick = 0;
+        if (target >= arr[idx])
+        {
+            pick = RecFun(arr, target - arr[idx], idx - 1) % MOD; // target reduced by arr[idx]
+        }
+        return (pick + notpick) % MOD;
+    }
+    int perfectSum0(int arr[], int n, int target)
+    {
+        return RecFun(arr, target, n - 1); // initial call for (n-1) last array index
+    }
+
+    //memoization    Time:O(n*target)   Space:O(n*target)+O(n) -> dp space + rec stack space
+    int memo(int arr[],int target,int idx,vector<vector<int>> &dp)
+	{
+	    //base case
+	    if(target==0)
+	    {
+	        return 1; //consider in count
+	    }
+	    if(idx==0)
+	    {
+	        if(arr[idx]==target)
+	           return 1;//consider in count
+	        else 
+	           return 0;//not to consider in count
+	    }
+	    //check dp for results first
+	    if(dp[idx][target]!=-1)
+	    {
+	        return dp[idx][target];
+	    }
+	    //during other recursive call => sum them up and return that count
+	    int notpick = memo(arr,target,idx-1,dp)%MOD; //target remain same in notpick case
+	    int pick = 0;
+	    if(target >= arr[idx])
+	    {
+	        pick = memo(arr,target-arr[idx],idx-1,dp)%MOD; //target reduced by arr[idx]
+	    }
+	    return dp[idx][target]=(pick+notpick)%MOD;
+	}
+	int perfectSum1(int arr[], int n, int target)
+	{
+	    vector<vector<int>> dp(n,vector<int>(target+1,-1));
+        return memo(arr,target,n-1,dp); //initial call for (n-1) last array index
+	}
+
+    //Tabulation  Time:O(n*target)   Space:O(n*target) -> only dp space
+    int perfectSum2(int arr[], int n, int target)
+	{
+	    vector<vector<int>> dp(n,vector<int>(target+1,0));
+	    
+	    //base case filled in dp
+	    for(int idx=0;idx<n;idx++) //if target==0
+	    {
+	        dp[idx][0] = 1;
+	    }
+	    if(arr[0]<=target) //if idx == 0
+	    {
+	        dp[0][arr[0]] = 1;
+	    }
+	    //****IMP::extra condition to handle '0' element at 0th index**************
+	    if(arr[0]==0)
+	    {
+	        dp[0][arr[0]] = 2;
+	    }
+	    //for idx 1 onwards
+	    for(int idx=1;idx<n;idx++)
+	    {
+	        for(int targetSum=0;targetSum<=target;targetSum++)
+	        {
+	            int notpick = dp[idx-1][targetSum];
+	            int pick=0;
+	            if(targetSum>=arr[idx])
+	            {
+	                pick = dp[idx-1][targetSum-arr[idx]];
+	            }
+	            dp[idx][targetSum] = (pick+notpick)%MOD;
+	        }
+	    }
+        return dp[n-1][target]; //initial call for (n-1) last array index
+	}
+
+    //Space optimization   Time:O(n*target)   Space:O(target)-->space of 1D array
+    int perfectSum3(int arr[], int n, int target)
+	{
+	    vector<int> prev(target+1,0);//to store the previous row ka result
+	    vector<int> curr(target+1,0); //to calculate current row ka result using prev[]
+	    
+	    //base case filled in dp
+	    //if target==0
+	    prev[0] = 1;
+	    curr[0] = 1;
+	    //if idx == 0
+	    prev[arr[0]] = 1;
+	    //****extra condition to handle '0' element at 0th index**************
+	    if(arr[0]==0)
+	    {
+	        prev[0] = 2;
+	    }
+	    //for idx 1 onwards
+	    for(int idx=1;idx<n;idx++)
+	    {
+	        for(int targetSum=0;targetSum<=target;targetSum++)
+	        {
+	            int notpick = prev[targetSum];
+	            int pick=0;
+	            if(targetSum>=arr[idx])
+	            {
+	                pick = prev[targetSum-arr[idx]];
+	            }
+	            curr[targetSum] = (pick+notpick)%MOD;
+	        }
+	        prev=curr;
+	    }
+        return prev[target]; //initial call for (n-1) last array index
+	}
+};
+
+//{ Driver Code Starts.
+int main()
+{
+    int n, sum;
+    cin >> n >> sum;
+    int a[n];
+    for (int i = 0; i < n; i++)
+        cin >> a[i];
+    Solution ob;
+    cout<< "Reccursion: " << ob.perfectSum0(a, n, sum) << "\n";
+    cout<< "Memoization: " << ob.perfectSum1(a, n, sum) << "\n";
+    cout<< "Tabulation: " << ob.perfectSum2(a, n, sum) << "\n";
+    cout<< "Space optimization: " << ob.perfectSum3(a, n, sum) << "\n";
+
+    return 0;
+}
+
+// testcase : 
+// 10 31
+// 9 7 0 3 9 8 6 5 7 6
+// Reccursion: 37        --> not handling 0 element condition
+// Memoization: 37       --> not handling 0 element condition
+// Tabulation: 40        --> can handle 0 element condition
+// Space optimization: 40 --> can handle 0 element condition
