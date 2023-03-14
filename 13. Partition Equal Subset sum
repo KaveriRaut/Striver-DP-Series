@@ -1,0 +1,133 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Intuition : extension to the previous isSubsetSum() problem // additional initial part
+// 1) find total_sum of array elements
+// 2) we will devide the array into exactly 2 subsets with equal sum, i.e. target_sum = total_sum/2;
+// 3) find if there exists any subset with sum=target_sum is required => refer the previous problem ka solution
+// 4) if isSubsetSum() for given target_sum exists...other subset will automatically has same sum equal to target_sum so return true else return false;
+
+class Solution
+{
+public:
+    // function same as => finding is subset with given target sum exists??
+    // memoization way => till index=idx can we have the sum=target;;; we are checking this in function
+    //  Time : O(n*target)    Space : O(n*target)+O(n) => dp spacce + recc stack space
+    bool isSubsetSum(int n, int arr[], int idx, int target, vector<vector<int>> &dp)
+    {
+        // base case
+        if (target == 0) // if target=0 => we reached our target
+        {
+            return true;
+        }
+        if (idx == 0) // if idx=0 => if we have target==arr[0] then only return true else return false
+        {
+            if (arr[0] == target)
+                return true;
+            else
+                return false;
+        }
+        // prechecking condition => if result already in dp
+        if (dp[idx][target] != -1)
+        {
+            return dp[idx][target];
+        }
+        // during reccursive call for each index => pick or not pick
+        int notPick = isSubsetSum(n, arr, idx - 1, target, dp); // for notpick => target remian same
+        int pick = false;                                       // initially false
+        if (target >= arr[idx])
+        {
+            pick = isSubsetSum(n, arr, idx - 1, target - arr[idx], dp); // for notpick => target reduced by arr[idx]
+        }
+        return dp[idx][target] = (pick | notPick); // store in dp and return true if anyone of pick|notPick is true
+    }
+
+    // Tabulation method
+    int isSubsetSum2(int n, int arr[], int target)
+    {
+        vector<vector<int>> dp(n, vector<int>(target + 1, 0)); // dp[n+1][target+1]
+
+        // base case to fill the dp table => take help of reccurance relation
+        // 1st base case => for every index=[idx] at target=0 => return true
+        for (int idx = 0; idx < n; idx++)
+        {
+            dp[idx][0] = true;
+        }
+        // 2nd base case => at index (idx==0) => if target is at arr[0] is present ==> then only return true;
+        dp[0][arr[0]] = true; // only on idx=0 of array you can form target arr[0]
+
+        // index 0 already processed   //target 0 already processed
+        // for furthur processing of all the indexes from 1st to last
+        for (int idx = 1; idx < n; idx++)
+        {
+            for (int targetSum = 1; targetSum <= target; targetSum++)
+            {
+                int notPick = dp[idx - 1][targetSum];
+                int pick = false;
+                if (targetSum >= arr[idx])
+                {
+                    pick = dp[idx - 1][targetSum - arr[idx]];
+                }
+                dp[idx][targetSum] = (notPick | pick);
+            }
+        }
+
+        return dp[n - 1][target]; // call for last idx and target
+    }
+
+    bool canPartition(int n, int nums[])
+    {
+        // find total_sum of given array
+        int total_sum = 0;
+        for (int i = 0; i < n; i++)
+        {
+            total_sum += nums[i];
+        }
+        // edge case ki if total_sum is odd => we cant divide it into 2 exactly subsets with eqaul sum
+        if (total_sum % 2 == 1)
+        {
+            // return false;
+            cout << "False";
+        }
+        // if total_sum is even => we can have exact 2 subsets with equal sum
+
+        // subset_sum1 + subset_sum2 = array total_sum
+        // subset_sum1 = subset_sum2
+        // this 2 conditions implies that => sum of both subset will be equal to total_sum/2
+        int target_sum = total_sum / 2; // target_sum is half of total_sum
+        // for memoization => maintain dp[index][target];
+        vector<vector<int>> dp(n, vector<int>(target_sum + 1, -1));
+        // return isSubsetSum(nums,n,n-1,target_sum,dp); //call for last index (n-1)
+
+        // This is for Memoization function call
+        if (isSubsetSum(n, nums, n - 1, target_sum, dp))
+            cout << "Memoization: YES\n";
+        else
+            cout << "Memoization: NO\n";
+        // This is for tabulation function call
+        if (isSubsetSum2(n, nums, target_sum))
+            cout << "Tabulation: YES\n";
+        else
+            cout << "Tabulation: NO\n";
+    }
+};
+
+int main()
+{
+    int N;
+    cin >> N;
+    int arr[N];
+    for (int i = 0; i < N; i++)
+        cin >> arr[i];
+
+    Solution ob;
+    ob.canPartition(N, arr);
+    return 0;
+}
+/*
+testcase:
+6
+2 3 3 3 4 5
+Memoization: YES
+Tabulation: YES 
+*/
