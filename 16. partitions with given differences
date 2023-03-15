@@ -1,0 +1,94 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// intuition: we have to divide the set into exactly 2 subsets such that :
+// constraint1 => subset1_sum >= subset2_sum
+// constraint2 => subset1_sum - subset2_sum = D
+// by our observation we can modify the equation of constraint2 like ->
+// totalSum = subset1_sum + subset2_sum; so substitute ==> subset1_sum = totalSum - subset2_sum
+// (subset1_sum) - subset2_sum = D
+// (totalSum - subset2_sum) - subset2_sum = D
+// totalSum - 2*subset2_sum = D
+// totalSum - D = 2*subset2_sum 
+// subset2_sum = (totalSum - D)/2
+// targetSum = (totalSum - D)/2  ---> this is our modified targetSum => whos subset count we need to find 
+
+// two edge cases need to handle
+// 1. targetSum must be positive. means (totalSum >= D) must hold true else return 0
+// 2. targetSum must be perfectly divisible by 2. means (totalSum - D) must be even else return 0
+
+class Solution {
+  public:
+  
+    int MOD = 1e9+7;
+    //memoization approach for 'count the no. of subsets with given targetSum'
+    //Time:O(n*targetSum)     Space:O(n*targetSum)+O(n)
+	int RecFun(vector<int>& arr,int target,int idx,vector<vector<int>> &dp)
+	{
+	    //base case => modified as per handling the 0 elements in array
+	    if(idx==0)
+	    {
+	        if(arr[0]==0 && target==0) return 2; //ye condition ke liye => both pick and notpick count honge as we achieve our condition
+	        if(target==0 || arr[0]==target) return 1; //any of these condition true measn we got 1 more subset satisfying our condtion
+	        return 0; //no subset found till this call that satisfy our condtition
+	    }
+	    //check dp for results first
+	    if(dp[idx][target]!=-1)
+	    {
+	        return dp[idx][target];
+	    }
+	    //during other recursive call => sum them up and return that count
+	    int notpick = RecFun(arr,target,idx-1,dp)%MOD; //target remain same in notpick case
+	    int pick = 0;
+	    if(target >= arr[idx])
+	    {
+	        pick = RecFun(arr,target-arr[idx],idx-1,dp)%MOD; //target reduced by arr[idx]
+	    }
+	    return dp[idx][target]=(pick+notpick)%MOD;
+	}
+  
+    // modified & derived targetsum from given constraints is : targetSum = (totalSum-D)/2; 
+    //finding the count of subsets having this modified targetSum
+    int countPartitions(int n, int d, vector<int>& arr) {
+        int totalSum = 0;
+        for(int i=0;i<n;i++)
+        {
+            totalSum+=arr[i];
+        }
+        //edge cases check
+        if(totalSum < d) //getting negative target => not possible
+        {
+            return 0;
+        }
+        if((totalSum-d)%2 ==1) //if target is in decimal => not possible
+        {
+            return 0;
+        }
+        // targetSum will be like
+        int targetSum = (totalSum-d)/2;
+        vector<vector<int>> dp(n,vector<int>(targetSum+1,-1)); //dp for memoization
+        return RecFun(arr,targetSum,n-1,dp);
+    }
+};
+
+int main() {
+    int n, d;
+    cin >> n >> d;
+    vector<int> arr;
+    for (int i = 0; i < n; ++i) {
+        int x;
+        cin >> x;
+        arr.push_back(x);
+    }
+    Solution obj;
+    cout << obj.countPartitions(n, d, arr) << "\n";
+    return 0;
+}
+
+/*
+testcase
+n = 4, d = 3
+arr[] =  { 5, 2, 6, 4}
+Output:
+1
+*/
