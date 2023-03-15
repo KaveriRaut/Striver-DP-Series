@@ -1,0 +1,176 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+
+// Intuition : need to return maximum value we can gather
+// by considering constraint that total wt of all items must be less than capacity of bag
+// func(idx, W) -> means till index=idx we have capacity of W to accomodate in bag
+// here we required tha maximum value of any no. of items in bag => so will return value of item in base case
+// base case : if(idx==0) reached and currItem has wt less than capacity of bag => return value[idx] else return 0;
+// for each index have pick and notpick option :
+// if (notPick) => 0 value to add + recc_call for (idx-1) with capacity remain same
+// if (Pick) => val[idx] value to add + recc_call for (idx-1) with capacity reduced by currItem ka wt[idx]
+// at last return max(pick,notpick)
+
+// Note:check the weight condition and return value ki value or add it
+
+class Solution
+{
+public:
+
+    // reccursive function to find max value can collect
+    // Time:O(2^n)   space:O(n) rec space space
+    int recc(int idx, int W, int wt[], int val[], int n)
+    {
+        // base case
+        if (idx == 0)
+        {
+            // if bag capacity is more that wt of item current => return its value
+            //  check the wt condition and return value
+            if (W >= wt[idx])
+                return val[0];
+            return 0; // else return 0 value
+        }
+        // during reccursion for each index have pick and notpick option
+        int notpick = 0 + recc(idx - 1, W, wt, val, n); // 0 value + W capacity of bag remain same only call for (idx-1)
+        int pick = INT_MIN;                             // to discard the value from MAX value path
+        if (W >= wt[idx])                               // condition check if bag can allow this wt or not
+        {
+            pick = val[idx] + recc(idx - 1, W - wt[idx], wt, val, n); // curr item ki val[idx+ + W capacity now reduced by curr item ka wt[idx]
+        }
+        return max(pick, notpick);
+    }
+    int knapSack1(int W, int wt[], int val[], int n)
+    {
+        // W -> total capacity of wt that bag allows
+        return recc(n - 1, W, wt, val, n); // reccursion from last array index (n-1) to 0th index
+    }
+
+    //memoization    Time:O(n*W)   Space:O(n*W)+O(n) -> dp space + rec stack space
+    int memo(int idx, int W, int wt[], int val[], int n,vector<vector<int>> &dp)
+    {
+        //base case
+        if(idx==0)
+        {
+            //if bag capacity is more that wt of item current => return its value
+            // check the wt condition and return value
+            if(W>=wt[idx]) return val[0];
+            return 0; //else return 0 value
+        }
+        //checking the memoization dp for results
+        if(dp[idx][W]!=-1)
+        {
+            return dp[idx][W];
+        }
+        //during reccursion for each index have pick and notpick option
+        int notpick = 0 + memo(idx-1,W,wt,val,n,dp); //0 value + W capacity of bag remain same only call for (idx-1)
+        int pick = INT_MIN; //to discard the value from MAX value path
+        if(W>=wt[idx]) //condition check if bag can allow this wt or not
+        {
+            pick = val[idx] + memo(idx-1,W-wt[idx],wt,val,n,dp); //curr item ki val[idx+ + W capacity now reduced by curr item ka wt[idx]
+        }
+        return dp[idx][W]=max(pick,notpick);
+    }
+    //Function to return max value that can be put in knapsack of capacity W.
+    int knapSack2(int W, int wt[], int val[], int n) 
+    { 
+        vector<vector<int>> dp(n,vector<int>(W+1,-1)); //memoization ka dp[n][W+1] size ka
+        //W -> total capacity of wt that bag allows
+        return memo(n-1,W,wt,val,n,dp); //reccursion from last array index (n-1) to 0th index
+    }
+
+    //Tabulation    Time:O(n*W)   Space:O(n*W) -> only dp space 
+    int knapSack3(int W, int wt[], int val[], int n) 
+    { 
+        //W -> total capacity of wt that bag allows
+        vector<vector<int>> dp(n,vector<int>(W+1,0)); //tabulation ka dp[n][W+1] size ka with 0 all
+        //base case => reccurance relation fill up dp table
+        for(int weight=wt[0];weight<=W;weight++) //if (idx==0) => for all wt greater than wt[0] to W => put value[0]
+        {
+            dp[0][weight] = val[0];
+        }
+        //now fill up table from idx=0 to n-1 and wt=0 to W
+        for(int idx=1;idx<n;idx++)
+        {
+            for(int currWT=0;currWT<=W;currWT++)
+            {
+                int notpick = 0 + dp[idx-1][currWT]; //nothing change in W and no value to add
+                int pick = INT_MIN;
+                if(currWT>=wt[idx])
+                {
+                    pick = val[idx] + dp[idx-1][currWT-wt[idx]];
+                }
+                dp[idx][currWT] = max(pick,notpick);
+            }
+        }
+        return dp[n-1][W]; //dp tabulation 
+    }
+
+    //Space optimization    Time:O(n*W)   Space:O(W) -> only 1D dp space 
+    int knapSack4(int W, int wt[], int val[], int n) 
+    { 
+        //W -> total capacity of wt that bag allows
+        vector<int> prev(W+1,0); //prev[W+1] for prev row ka result storing
+        vector<int> curr(W+1,0); //prev[W+1] for prev row ka result storing
+        
+        //base case => prev[] array ko bharo as base case of (idx==0)
+        for(int weight=wt[0];weight<=W;weight++) //if (idx==0) => for all wt greater than wt[0] to W => put value[0]
+        {
+            prev[weight] = val[0];
+        }
+        //now fill up table from idx=0 to n-1 and wt=0 to W
+        for(int idx=1;idx<n;idx++)
+        {
+            for(int currWT=0;currWT<=W;currWT++)  // replacing the dp[idx-1] ==> prev[] 
+            {
+                int notpick = 0 + prev[currWT]; //nothing change in W and no value to add
+                int pick = INT_MIN;
+                if(currWT>=wt[idx])
+                {
+                    pick = val[idx] + prev[currWT-wt[idx]];
+                }
+                curr[currWT] = max(pick,notpick); //replacing dp[idx] by curr[]
+            }
+            prev = curr; // IMP *** copy back
+        }
+        return prev[W]; 
+    }
+
+};
+
+// Driver Code Starts.
+
+int main()
+{
+    // reading number of elements and weight
+    int n, w;
+    cin >> n >> w;
+
+    int val[n];
+    int wt[n];
+
+    // inserting the values
+    for (int i = 0; i < n; i++)
+        cin >> val[i];
+
+    // inserting the weights
+    for (int i = 0; i < n; i++)
+        cin >> wt[i];
+    Solution ob;
+    // calling method knapSack()
+    cout<< "Reccursion: " << ob.knapSack1(w, wt, val, n) << endl;
+    cout<< "Memoization: " << ob.knapSack2(w, wt, val, n) << endl;
+    cout<< "Tabulation: " << ob.knapSack3(w, wt, val, n) << endl;
+    cout<< "Opmization: " << ob.knapSack4(w, wt, val, n) << endl;
+    return 0;
+}
+
+/*
+testcase:
+3 -> N
+6 -> W capacity
+30 40 60 -> value[]
+3 2 5 -> wt[]
+
+output: 70
+*/
