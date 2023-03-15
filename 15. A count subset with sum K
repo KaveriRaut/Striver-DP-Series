@@ -9,6 +9,12 @@ using namespace std;
 // else return 0; -> not to count that path
 // for all other reccursive calls => sum up them all and return back;
 
+//Type A ==> if constraint is (1 <= arr[i] <= 10^6); means if array do not consist of 0 .
+//base case is different for recursion and memoization function
+
+//Type B ==> if constraint is (0 <= arr[i] <= 10^6); means if array can consist of 0 also
+//just base case is modified for tabulation and optimization function => go till index 0 each time
+
 class Solution
 {
 
