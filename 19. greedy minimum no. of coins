@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+class Solution
+{
+public:
+    // This is Not a DP Problem At all.
+    // Its greedy approach problem
+
+    // always find the largest possible coin (any no. od time) to reach the target (but do not exceed the target)
+    // remaining target try to reach with other maiximum coin available
+    // do the same thing till getting target achieved
+
+    vector<int> minPartition(int target)
+    {
+        vector<int> coins = {2000, 500, 200, 100, 50, 20, 10, 5, 2, 1}; // written in descending order
+
+        vector<int> vec;
+
+        for (int i = 0; i < coins.size();) // increment condition of (i) not provided
+        {
+            // pick case but (i) remian same
+            if (target >= coins[i]) // got the maximum coin that can be use to reach target
+            {
+                // idx remin same as (i) again
+                // now target remaining is becomes remain smaller
+                target = target - coins[i];
+                vec.push_back(coins[i]); // current coin ko vec me daalo
+            }
+            // not pick case but (i) increses
+            else // current coin itself greater than target => so it cant be picked
+            {
+                i++;
+            }
+        }
+        return vec;
+    }
+};
+
+// Driver Code Starts.
+
+int main()
+{
+    int N;
+    cin >> N;
+
+    Solution ob;
+    vector<int> numbers = ob.minPartition(N);
+    for (auto u : numbers)
+        cout << u << " ";
+    cout << "\n";
+    return 0;
+}
