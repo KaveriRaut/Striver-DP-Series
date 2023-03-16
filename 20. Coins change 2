@@ -1,0 +1,157 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// we have to count all the possible combinations to achieve the targetSum given =>
+// note that we have multiple occurances of coins and can use any coin any no. of times
+// Intuition =>
+// refer DP20 of count the minimum coins => pick and notpick case with extra modification condition due to multiple copies
+// if (notpick) => idx reduced but target remain same
+// if (pick) => idx remain same but target reduced by curr coin value
+// in base case => if base case satisfy -> return 1 else return 0 bcoz we want to count all the combo ways possible
+
+class Solution
+{
+public:
+
+    // Simple Reccurion
+    // Time:O(2^n) more than this =>O(exponential)   Space:O(target) more than this also
+    long long int recc(int idx, int target, int coins[], int n)
+    {
+        // base case
+        if (idx == 0) //want to find total count of ways => so return 1 or 0 only, nothing else
+        {
+            if (target % coins[0] == 0) // target perfectly divisible by curr coin => return 1 as we want the count of ways
+                return 1;
+            else
+                return 0;
+        }
+        // during reccursion => pick and notpick
+        long long int notpick = recc(idx - 1, target, coins, n); // notpick => idx reduced, target same
+        long long int pick = 0;
+        if (target >= coins[idx])
+        {
+            pick = recc(idx, target - coins[idx], coins, n); // pick => idx same, target reduced => reason is multiple occurance available
+        }
+        return (pick + notpick);
+    }
+    long long int count1(int coins[], int n, int target)
+    {
+        return recc(n - 1, target, coins, n); // till last index (n-1) how many ways can achieve target
+    }
+
+    //memoization approach
+    // Time:O(n*target)   Space:O(n*target)+O(target) -> dp space + recc stack space
+    long long int memo(int idx,int target,int coins[],int n,vector<vector<long long int>> &dp)
+    {
+        //base case
+        if(idx==0)
+        {
+            if(target%coins[0]==0) //target perfectly divisible by curr coin => return 1 as we want the count of ways
+                return 1;
+            else
+                return 0;
+        }
+        //pre-checking condition in dp
+        if(dp[idx][target]!=-1)
+        {
+            return dp[idx][target];
+        }
+        //during reccursion => pick and notpick
+        long long int notpick = memo(idx-1,target,coins,n,dp); //notpick => idx reduced, target same
+        long long int pick = 0;
+        if(target>=coins[idx])
+        {
+            pick = memo(idx,target-coins[idx],coins,n,dp); //pick => idx same, target reduced => reason is multiple occurance available
+        }
+        return dp[idx][target]=(pick+notpick);
+    }
+    long long int count2(int coins[], int n, int target) {
+        vector<vector<long long int>> dp(n,vector<long long int>(target+1,-1)); //memoization dp[n][target+1]={-1}
+        return memo(n-1,target,coins,n,dp); //till last index (n-1) how many ways can achieve target
+    }
+
+    //Tabulation : Time:O(n*target)   Space:O(n*target) => only 2D dp array
+    long long int count3(int coins[], int n, int target) {
+        vector<vector<long long int>> dp(n,vector<long long int>(target+1,0)); //tabulation dp[n][target+1]={0}
+        // fill up the base cases for dp[][] -> use reccurance relation
+        // if (idx=0) => for all the taret values that perfectly divisible by coins[0] => put there 1 else put 0
+        for(int T=0;T<=target;T++)
+        {
+            if(T%coins[0]==0)//perfectly divisible so put there 1
+                dp[0][T] = 1;
+            // Else condition is automatically fulfilled, as dp array is initialized to zero
+        }
+        //during filling remaining dp table for idx=1 to (n-1)
+        for(int idx=1;idx<n;idx++)
+        {
+            for(int T=0;T<=target;T++)
+            {
+                long long int notpick = dp[idx-1][T]; //only idx reduced
+                long long int pick = 0;
+                if(T>=coins[idx])
+                {
+                    pick = dp[idx][T-coins[idx]]; //only target reduced
+                }
+                dp[idx][T] = (pick+notpick);
+            }
+        }
+        return dp[n-1][target]; //at last index (n-1) to achieve target
+    }
+
+    // Space optimization: Time:O(n*target)   Space:O(target) -> only 1D dp array used
+    // at dp[idx-1] put prev
+    // at dp[idx] put curr
+    long long int count4(int coins[], int n, int target) {
+        vector<long long int> prev(target+1,0); //prev[target+1]={0} to store the previous row ka reuslt only
+        vector<long long int> curr(target+1,0); //curr[target+1]={0} to store the curr row ka reuslt only
+        // fill up the base cases for prev[]-> use reccurance relation
+        // if (idx=0) => for all the target values that perfectly divisible by coins[0] => put there 1 else put 0
+        for(int T=0;T<=target;T++)
+        {
+            if(T%coins[0]==0)//perfectly divisible so put there 1
+                prev[T] = 1;
+            // Else condition is automatically fulfilled, as dp array is initialized to zero
+        }
+        //during filling remaining dp table for idx=1 to (n-1)
+        for(int idx=1;idx<n;idx++)
+        {
+            for(int T=0;T<=target;T++)
+            {
+                long long int notpick =  prev[T]; //only idx reduced
+                long long int pick = 0;
+                if(T>=coins[idx])
+                {
+                    pick = curr[T-coins[idx]]; //only target reduced
+                }
+                curr[T] = (pick+notpick);
+            }
+            prev = curr; //VVIMP ** to copy back each other
+        }
+        return prev[target]; //at last index (n-1) to achieve target
+    }
+};
+
+// Driver Code Starts.
+int main()
+{
+    int sum, N;
+    cin >> sum >> N;
+    int coins[N];
+    for (int i = 0; i < N; i++)
+        cin >> coins[i];
+    Solution ob;
+    cout<<"Reccursion: " << ob.count1(coins, N, sum) << endl;
+    cout<<"Memoization: " << ob.count2(coins, N, sum) << endl;
+    cout<<"Tabulation: " << ob.count3(coins, N, sum) << endl;
+    cout<<"Space optimiazation: " << ob.count4(coins, N, sum) << endl;
+    return 0;
+}
+
+/*
+testcase:
+sum = 4 
+N = 3
+coins[] = {1,2,3}
+Output: 4
+Explanation: Four Possible ways are: {1,1,1,1},{1,1,2},{2,2},{1,3}.
+*/
