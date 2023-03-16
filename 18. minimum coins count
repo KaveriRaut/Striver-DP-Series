@@ -1,0 +1,204 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Intuition : 
+// infinite occurance of each coins allowed to take or not => we have to reach target amount with minimum no. coins 
+// each idx we have 2 options like pick and notpick 
+// here (notpick) is same as previous examples => idx reduce by 1 && target remain same
+// but (pick) option we have infinite occurane so=> idx remain same but target decrease by picked coin value
+// with each pick coin count increase by 1 
+
+// recc(n-1,amount,coins) => this call means till index (n-1) how many coins needed to form target amount
+
+class Solution {
+public:
+
+    //reccurion approach -> top-down means from last index of array to 0th index
+    // Time: very more than O(2^n) as options are not limited to pick and notpick only => exponential
+    // Space:O(target) se bhi more hogi space required
+    int recc(int idx,int target,vector<int>& coins)
+    {
+        //base case
+        if(idx==0) //idx=0 reached
+        {
+            //only if this last coin is perfectly dividinge the target => return those many count of it to acheive that target
+            if(target%coins[idx]==0) //if perfect divisible 
+            {
+                return target/coins[idx];
+            }
+            else //otherwise not possible so return max value to get discard
+            {
+                return 1e9;
+            }
+        }
+        //reccurive calls for notpick and pick
+        //for (notpick) = (idx reduced) but (target remain same);
+        int notpick = 0 + recc(idx-1,target,coins); // 0 coins added
+        int pick = INT_MAX; //to discard this from minimum coins results in case
+        if(target>=coins[idx]) //check condition can really pick current coin to reach target
+        {
+            //for (pick) = (idx not reduced as multiple coins have) but (target reduced by coin just picked);
+            pick = 1 + recc(idx, target-coins[idx],coins); //1 coin added
+        }
+
+        return min(pick,notpick);
+    }
+    int coinChange1(vector<int>& coins, int amount) {
+        int n=coins.size();
+        int res = recc(n-1,amount,coins); //initial call to last index with given target
+        if(res>=1e9) //we return MAX if it is not possible to get minimum coins to reach target => so return -1
+        {
+            return -1;
+        }
+        return res;
+    }
+
+    //memoization approach -> top-down means from last index of array to 0th index
+    // Time:O(n*target)   Space:O(n*target)+O(target) -> dp space + recc stack space
+    int memo(int idx,int target,vector<int>& coins,vector<vector<int>> &dp)
+    {
+        //base case
+        if(idx==0) //idx=0 reached
+        {
+            //only if this last coin is perfectly dividinge the target => return those many count of it to acheive that target
+            if(target%coins[idx]==0) //if perfect divisible 
+            {
+                return target/coins[idx];
+            }
+            else //otherwise not possible so return max value to get discard
+            {
+                return 1e9;
+            }
+        }
+        //pre checking of dp[][]
+        if(dp[idx][target]!=-1)
+        {
+            return dp[idx][target];
+        }
+        //reccurive calls for notpick and pick
+        //for (notpick) = (idx reduced) but (target remain same);
+        int notpick = 0 + memo(idx-1,target,coins,dp); // 0 coins added
+        int pick = INT_MAX; //to discard this from minimum coins results in case
+        if(target>=coins[idx]) //check condition can really pick current coin to reach target
+        {
+            //for (pick) = (idx not reduced as multiple coins have) but (target reduced by coin just picked);
+            pick = 1 + memo(idx, target-coins[idx],coins,dp); //1 coin added
+        }
+        return dp[idx][target]=min(pick,notpick);
+    }
+    int coinChange2(vector<int>& coins, int amount) {
+        int n=coins.size();
+        vector<vector<int>> dp(n,vector<int>(amount+1,-1)); //memoization dp[n][amount+1] = {-1}
+        int res = memo(n-1,amount,coins,dp); //initial call to last index with given target
+        if(res>=1e9) //we return MAX if it is not possible to get minimum coins to reach target => so return -1
+        {
+            return -1;
+        }
+        return res;
+    }
+
+    //tabulation approach -> bottom-up means from 0th index of array to last index // go on filling the dp and use it for next filling
+    // Time:O(n*target)   Space:O(n*target) -> only dp space
+    int coinChange3(vector<int>& coins, int target) {
+        int n=coins.size();
+        vector<vector<int>> dp(n,vector<int>(target+1,0)); //tabulation dp[n][target+1] = {0}
+        //as per base cases from reccurance relation => fill up the dp table first for base cases
+        //base case: at idx==0 => check all the targets => any target perfectly divisible by coin[0] => return its quotent i.e. no. of coins
+        for(int T=0;T<=target;T++)
+        {
+            if(T%coins[0]==0) //if target is perfectly divisible so return count of coins i.e. quotient
+                dp[0][T] = T/coins[0];
+            else
+                dp[0][T] = 1e9; //to discard purpose from minimum coins ka count
+        }
+        //now for idx : 1 to n-1 and T: 0 to target ==> fill up the dp[][]
+        for(int idx=1;idx<n;idx++)
+        {
+            for(int T=0;T<=target;T++)
+            {
+                int notpick = 0 + dp[idx-1][T];// 0 coin added + idx reduce by 1 + target is same
+                int pick = INT_MAX; //for discard purpose
+                if(T>=coins[idx]) //if target is greater than curr coin the only can pick up the current coin in order to reach target
+                {
+                    pick = 1 + dp[idx][T-coins[idx]]; // 1 coin added + idx remain same + target reduced by curr coin value
+                }
+                dp[idx][T] = min(pick,notpick); //store the minimum count of coins into dp
+            }
+        }
+        int answer = dp[n-1][target];
+        //for final answer return
+        if(answer>=1e9) //we return MAX if it is not possible to get minimum coins to reach target => so return -1
+            return -1;
+        else
+            return answer;
+    }
+
+    //space optimization approach -> bottom-up means from 0th index of array to last index // prev[] array to store previous results and curr[] for current row results sathi
+    // Time:O(n*target)   Space:O(target) -> only 1D dp space
+    int coinChange4(vector<int>& coins, int target) {
+        int n=coins.size();
+        vector<int> prev(target+1,0); //prev[target+1] = {0}
+        vector<int> curr(target+1,0); //prev[target+1] = {0}
+        //as per base cases from reccurance relation => fill up the dp table first for base cases
+        //base case: at idx==0 => check all the targets => any target perfectly divisible by coin[0] => return its quotent i.e. no. of coins
+        for(int T=0;T<=target;T++)
+        {
+            if(T%coins[0]==0) //if target is perfectly divisible so return count of coins i.e. quotient
+                prev[T] = T/coins[0];
+            else
+                prev[T] = 1e9; //to discard purpose from minimum coins ka count
+        }
+        //now for idx : 1 to n-1 and T: 0 to target ==> fill up the dp[][]
+        for(int idx=1;idx<n;idx++)
+        {
+            for(int T=0;T<=target;T++)
+            {
+                int notpick = 0 + prev[T];// 0 coin added + idx reduce by 1 + target is same
+                int pick = INT_MAX; //for discard purpose
+                if(T>=coins[idx]) //if target is greater than curr coin the only can pick up the current coin in order to reach target
+                {
+                    pick = 1 + curr[T-coins[idx]]; // 1 coin added + idx remain same + target reduced by curr coin value
+                }
+                curr[T] = min(pick,notpick); //store the minimum count of coins into dp
+            }
+            prev = curr; //IMP****copy back 1D dp arrays
+        }
+        int answer = prev[target];
+
+        //for final answer return
+        if(answer>=1e9) //we return MAX if it is not possible to get minimum coins to reach target => so return -1
+        {
+            return -1;
+        }
+        return answer;
+    }
+};
+
+// Driver Code Starts.
+
+int main()
+{
+    // reading number of elements and target amount
+    int n, w;
+    cin >> n >> w;
+
+    vector<int> coins(n);
+
+    // inserting the values
+    for (int i = 0; i < n; i++)
+        cin >> coins[i];
+
+    Solution ob;
+    cout<< "Reccursion: " << ob.coinChange1(coins,w) << endl;
+    cout<< "Memoization: " << ob.coinChange2(coins,w) << endl;
+    cout<< "Tabulation: " << ob.coinChange3(coins,w) << endl;
+    cout<< "optimization: " << ob.coinChange4(coins,w) << endl;
+    return 0;
+}
+
+/*
+testcase
+Input: n=3, amount = 11, coins = [1,2,5]
+Output: 3
+Explanation: 11 = 5 + 5 + 1
+*/
