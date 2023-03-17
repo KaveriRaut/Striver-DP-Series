@@ -1,0 +1,169 @@
+//{ Driver Code Starts
+// Initial Template for C++
+
+#include <bits/stdc++.h>
+using namespace std;
+
+// } Driver Code Ends
+// User function Template for C++
+
+// Intuition: given infinite source of items => means can take any item any no. of times
+// we want maximum value at end using infinite sourcce of items => but total wt must be <= bagWT capacity i.e. W
+// in base case => if(condition fulfilled) return (no. of occurances req * val) else return INT_MIN
+// if (notpick) => idx reduced but bagWT remain same
+// if (pick) => idx remain same but bagWT capacity reduced by wt of curr item
+// return max of pick and notpick
+
+class Solution
+{
+public:
+    // top-down approach of reccursion => start with last index , till idx bag has capacity bagWT
+    //  Simple Reccurion
+    //  Time:O(2^n) more than this =>O(exponential)   Space:O(bagWT) more than this also
+    int recc(int idx, int bagWT, int wt[], int val[])
+    {
+        // base case
+        if (idx == 0)
+        {
+            //(bagWT/wt[0]) => occurances that we can pick * val[0] its total value we want
+            return ((int)(bagWT / wt[0])) * val[0];
+        }
+        // during reccursion
+        int notpick = 0 + recc(idx - 1, bagWT, wt, val); // notpick => only index reduced
+        int pick = INT_MIN;                              // answer to find is maximum
+        if (bagWT >= wt[idx])
+        {
+            pick = val[idx] + recc(idx, bagWT - wt[idx], wt, val); // pick => only bagWT reduced and curr item value added
+        }
+
+        return max(pick, notpick);
+    }
+    int knapSack1(int n, int W, int val[], int wt[])
+    {
+        // W => at start bag capacity to hold wt
+        return recc(n - 1, W, wt, val); // initial call from last index with capacity full as given
+    }
+
+    // memoization approach
+    // Time:O(n*bagWT)   Space:O(n*bagWT)+O(bagWT) -> dp space + recc stack space
+    int memo(int idx, int bagWT, int wt[], int val[], vector<vector<int>> &dp)
+    {
+        // base case
+        if (idx == 0)
+        {
+            //(bagWT/wt[0]) => occurances that we can pick * val[0] its total value we want
+            return ((int)(bagWT / wt[0])) * val[0];
+        }
+        // pre checking of the results in dp
+        if (dp[idx][bagWT] != -1)
+        {
+            return dp[idx][bagWT];
+        }
+        // during reccursion
+        int notpick = 0 + memo(idx - 1, bagWT, wt, val, dp); // notpick => only index reduced
+        int pick = INT_MIN;                                  // answer to find is maximum
+        if (bagWT >= wt[idx])
+        {
+            pick = val[idx] + memo(idx, bagWT - wt[idx], wt, val, dp); // pick => only bagWT reduced and curr item value added
+        }
+
+        return dp[idx][bagWT] = max(pick, notpick);
+    }
+    int knapSack2(int n, int W, int val[], int wt[])
+    {
+        // W => at start bag capacity to hold wt
+        vector<vector<int>> dp(n, vector<int>(W + 1, -1)); // memoization dp[n][W+1]={-1}
+        return memo(n - 1, W, wt, val, dp);                // initial call from last index with capacity full as given
+    }
+
+    // Tabulation : Time:O(n*bagWT)   Space:O(n*bagWT) => only 2D dp array
+    // bottom up approach that oppo. of reccursion => start with 0th idx till last index, with bagWT from 0 to W given
+    int knapSack3(int n, int W, int val[], int wt[])
+    {
+        // W => at start bag capacity to hold wt
+        vector<vector<int>> dp(n, vector<int>(W + 1, 0)); // tabulation dp[n][W+1]={0}
+        // fill up base case for dp
+        for (int bagWT = 0; bagWT <= W; bagWT++) // at idx==0
+        {
+            dp[0][bagWT] = (int)(bagWT / wt[0]) * val[0]; // entire value of occurances that we picked
+        }
+        // for remaining dp table
+        for (int idx = 1; idx < n; idx++)
+        {
+            for (int bagWT = 0; bagWT <= W; bagWT++)
+            {
+                // just copy the reccurance
+                int notpick = 0 + dp[idx - 1][bagWT]; // notpick => only index reduced
+                int pick = INT_MIN;                   // answer to find is maximum
+                if (bagWT >= wt[idx])
+                {
+                    pick = val[idx] + dp[idx][bagWT - wt[idx]]; // pick => only bagWT reduced and curr item value added
+                }
+                dp[idx][bagWT] = max(pick, notpick);
+            }
+        }
+        return dp[n - 1][W];
+    }
+
+    // Space optimization: Time:O(n*target)   Space:O(target) -> only 1D dp array used
+    // at dp[idx-1] put prev
+    // at dp[idx] put curr
+    int knapSack4(int n, int W, int val[], int wt[])
+    {
+        // W => at start bag capacity to hold wt
+        vector<int> prev(W + 1, 0);
+        vector<int> curr(W + 1, 0);
+        // fill up base case for dp
+        for (int bagWT = 0; bagWT <= W; bagWT++) // at idx==0
+        {
+            prev[bagWT] = (int)(bagWT / wt[0]) * val[0]; // entire value of occurances that we picked
+        }
+        // for remaining dp table
+        for (int idx = 1; idx < n; idx++)
+        {
+            for (int bagWT = 0; bagWT <= W; bagWT++)
+            {
+                // just copy the reccurance
+                int notpick = 0 + prev[bagWT]; // notpick => only index reduced
+                int pick = INT_MIN;            // answer to find is maximum
+                if (bagWT >= wt[idx])
+                {
+                    pick = val[idx] + curr[bagWT - wt[idx]]; // pick => only bagWT reduced and curr item value added
+                }
+                curr[bagWT] = max(pick, notpick);
+            }
+            prev = curr; // VIMP** to copy back
+        }
+        return prev[W];
+    }
+};
+
+// Driver Code Starts.
+
+int main()
+{
+
+    int N, W;
+    cin >> N >> W;
+    int val[N], wt[N];
+    for (int i = 0; i < N; i++)
+        cin >> val[i];
+    for (int i = 0; i < N; i++)
+        cin >> wt[i];
+
+    Solution ob;
+    cout << "Reccursion: " << ob.knapSack1(N, W, val, wt) << endl;
+    cout << "Memoization: " << ob.knapSack2(N, W, val, wt) << endl;
+    cout << "Tabulation: " << ob.knapSack3(N, W, val, wt) << endl;
+    cout << "Space optimization: " << ob.knapSack4(N, W, val, wt) << endl;
+    return 0;
+}
+
+/*
+testcase:
+N = 3
+W = 10
+val[] = {5 11 13}
+wt[] = {2 4 6}
+o/p = 27
+*/
