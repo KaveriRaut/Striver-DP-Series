@@ -1,0 +1,149 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Intuition : as given the inifinite supply of pieces
+// try to think in other way => like we have to combine pieces to make length N and find all such combos and return max price
+// Now this problem falls down as DP23:unbounded knapsack problem
+// base case idx==0 => return (N*price[0])
+// if (notpick) => only index reduced
+// if (pick) => only remN length is reduced
+
+class Solution{
+  public:
+
+    // top-down approach of reccursion => start with last index , till idx bag has capacity bagWT
+    //  Simple Reccurion
+    //  Time:O(2^n) more than this =>O(exponential)   Space:O(rodLength) i.e. O(n) more than this also
+    int recc(int idx,int remLen,int price[]) //till index idx what is remLen to achieve => returns max of price to get remLen
+    {
+        // base case
+        if(idx==0)
+        {
+            return (remLen*price[0]); //need to return the total price that added
+        }
+        //during recurion => pick and notpick
+        int notpick = 0 + recc(idx-1,remLen,price); //only idx reduced but remLen same
+        int pick = INT_MIN;
+        int pieceLen = idx+1;
+        if(remLen >= pieceLen)
+        {
+            pick = price[idx] + recc(idx,remLen-pieceLen,price); //idx stays same but remLen is reduced
+        }
+        return max(pick,notpick);
+    }
+    int cutRod1(int price[], int n) {
+        return recc(n-1,n,price); //call for last index of array with total rod length n initially
+    }
+
+    // memoization approach : rodLen = n , total size = n
+    // Time:O(n*n)   Space:O(n*n)+O(n) -> dp space + recc stack space
+    int memo(int idx,int remLen,int price[],vector<vector<int>> &dp) //till index idx what is remLen to achieve => returns max of price to get remLen
+    {
+        // base case
+        if(idx==0)
+        {
+            return (remLen*price[0]); //need to return the total price that added
+        }
+        //pre checking condition of dp
+        if(dp[idx][remLen]!=-1)
+        {
+            return dp[idx][remLen];
+        }
+        //during recurion => pick and notpick
+        int notpick = 0 + memo(idx-1,remLen,price,dp); //only idx reduced but remLen same
+        int pick = INT_MIN;
+        int pieceLen = idx+1;
+        if(remLen >= pieceLen)
+        {
+            pick = price[idx] + memo(idx,remLen-pieceLen,price,dp); //idx stays same but remLen is reduced
+        }
+        return dp[idx][remLen]=max(pick,notpick);
+    }
+    int cutRod2(int price[], int n) {
+        vector<vector<int>> dp(n,vector<int>(n+1,-1)); //memoization dp[n][n+1]={-1}; as here n is target length
+        return memo(n-1,n,price,dp); //call for last index of array with total rod length n initially
+    }
+
+    // Tabulation : Time:O(n*n)   Space:O(n*n) => only 2D dp array
+    // bottom up approach that oppo. of reccursion => start with 0th idx till last index, with remLen from 0 to n given
+    int cutRod3(int price[], int n) //rodLen = n , total size = n
+    {
+        vector<vector<int>> dp(n,vector<int>(n+1,0)); //tabulation dp[n][n+1]={0}; as here n is target length
+        //fill up the base case into dp
+        for(int remLen=0;remLen<=n;remLen++) // at idx==0
+        {
+            dp[0][remLen] = remLen*price[0]; //IMP****put the total price added
+        }
+        //for remaining table
+        for(int idx=1;idx<n;idx++)
+        {
+            for(int remLen=0;remLen<=n;remLen++)
+            {
+                int notpick = 0 + dp[idx-1][remLen];//only idx reduced but remLen same
+                int pick = INT_MIN;
+                int pieceLen = idx+1;
+                if(remLen >= pieceLen)
+                {
+                    pick = price[idx] + dp[idx][remLen-pieceLen]; //idx remain same but remLen is reduced
+                }
+                dp[idx][remLen] = max(pick,notpick);
+            }
+        }
+        return dp[n-1][n]; //call for last index of array with total rod length n initially
+    }
+
+    // Space optimization: Time:O(n*n)   Space:O(n) -> only 1D dp array used
+    // at dp[idx-1] put prev
+    // at dp[idx] put curr
+    int cutRod4(int price[], int n) //rodLen = n , total size = n
+    {
+        vector<int> prev(n+1,0); //optimization prev[n+1]={0}; as here n is target length
+        vector<int> curr(n+1,0);
+        //fill up the base case into dp
+        for(int remLen=0;remLen<=n;remLen++) // at idx==0
+        {
+            prev[remLen] = remLen*price[0]; //IMP****put the total price added
+        }
+        //for remaining table
+        for(int idx=1;idx<n;idx++)
+        {
+            for(int remLen=0;remLen<=n;remLen++)
+            {
+                int notpick = 0 + prev[remLen];//only idx reduced but remLen same
+                int pick = INT_MIN;
+                int pieceLen = idx+1;
+                if(remLen >= pieceLen)
+                {
+                    pick = price[idx] + curr[remLen-pieceLen]; //idx remain same but remLen is reduced
+                }
+                curr[remLen] = max(pick,notpick);
+            }
+            prev = curr; //copy back VIMP *****
+        }
+        return prev[n]; //call for last index of array with total rod length n initially
+    }
+
+};
+
+// Driver Code Starts.
+int main() {
+        int n;
+        cin >> n;
+        int a[n];
+        for (int i = 0; i < n; i++) 
+            cin >> a[i];
+            
+        Solution ob;
+        cout << "Recursion: " << ob.cutRod1(a, n) << endl;
+        cout << "Memoization: " << ob.cutRod2(a, n) << endl;
+        cout << "Tabulation: " << ob.cutRod3(a, n) << endl;
+        cout << "Space optimization: " << ob.cutRod4(a, n) << endl;
+    return 0;
+}
+
+/*
+testcase:
+n = 5
+price[] = {2 5 7 8 10}
+o/p = 12
+*/
