@@ -60,5 +60,12 @@ int main()
     cin >> s1 >> s2;
     Solution ob;
 
-    cout << ob.longestCommonSubstr(s1, s2, n, m) << endl;
+    cout <<"By Tabulation: " << ob.longestCommonSubstr(s1, s2, n, m) << endl;
 }
+
+/*
+testcase:
+Input: S1 = "ABCDGH", S2 = "ACDGHR", n = 6, m = 6
+Output: 4
+Explanation: The longest common substring is "CDGH" which has length 4.
+*/
