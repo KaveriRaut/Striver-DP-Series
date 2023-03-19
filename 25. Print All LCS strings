@@ -1,0 +1,124 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// 1. find length of LCS (Using DP tabulation function)
+// 2. Find the all possibles LCS => Using Set (for unique strings) + Backtracking
+// 3. Sort all LCS, and return it.
+
+class Solution
+{
+public:
+    // this function returns the length of LCS
+    int tabulation(int n, int m, string str1, string str2)
+    {
+        //**************************tabulation code begins**************************************
+        vector<vector<int>> dp(n + 1, vector<int>(m + 1, 0)); // dp[n+1][m+1] size => index shifted to right by 1
+        // base case filling dp
+        for (int i = 0; i <= n; i++)
+        {
+            for (int j = 0; j <= m; j++)
+            {
+                if (i == 0 || j == 0)
+                    dp[i][j] = 0;
+            }
+        }
+        // remaining dp table filling
+        for (int i = 1; i <= n; i++)
+        {
+            for (int j = 1; j <= m; j++)
+            {
+                // if matched
+                if (str1[i - 1] == str2[j - 1]) //(i,j) index of dp=>points to char at (i-1,j-1) in strings
+                {
+                    dp[i][j] = 1 + dp[i - 1][j - 1];
+                }
+                else // else if notMatched
+                {
+                    dp[i][j] = max(dp[i - 1][j], dp[i][j - 1]);
+                }
+            }
+        }
+        // creation of LCS dp table is done
+        // length of LCS == dp[n][m]
+        return dp[n][m]; // length of LCS
+    }
+
+    // globally declared set<string> st; to add only unique LCS strings in vector
+    set<string> st;
+    void backtracking(string str1, string str2, int i, int j, string &temp, vector<string> &vec, int lcs_len)
+    {
+        //******************recursive function for backtracking to add 1-1 LCS string******************************
+        // 1)add to set and vector
+        if (lcs_len == 0) // means got one of the LCS string
+        {
+            // check if already in set=>so dont add in vector
+            // if not already present => then add it to vector
+            if (st.find(temp) == st.end())
+            {
+                st.insert(temp);
+                vec.push_back(temp);
+            }
+            return; // otherwise return directly
+        }
+        // 2)break if boundry crossed
+        // index i,j ki boundry breaking condition
+        if (i >= str1.size() || j >= str2.size())
+        {
+            return;
+        }
+        // 3)recursively call for function to add common letters of LCS (from given index as (i,j) to last of string)
+        for (int row = i; row < str1.size(); row++) /// range IMP******row<str1.size()
+        {
+            for (int col = j; col < str2.size(); col++)
+            {
+                // checking in strings from given starting indexes (i,j) till last=> using pointers row,col
+                // if (matched) => add letter to temp string => and make recCall with (row+1,col+1) and (lcs_len-1)
+                // during backtrack remove that letter again
+                if (str1[row] == str2[col]) // matched
+                {
+                    temp.push_back(str1[row]);
+                    backtracking(str1, str2, row + 1, col + 1, temp, vec, lcs_len - 1);
+                    temp.pop_back();
+                }
+            }
+        }
+    }
+
+    vector<string> all_longest_common_subsequences(string str1, string str2)
+    {
+        int n = str1.size();
+        int m = str2.size();
+        int lcs_len = tabulation(n, m, str1, str2);
+        vector<string> vec;                                 // to store all LCS strings
+        string temp = "";                                   // to collect one-one string and add to vector
+        backtracking(str1, str2, 0, 0, temp, vec, lcs_len); // trying to make lcs_len=0 by collecting 1-1 letter
+        sort(vec.begin(), vec.end());
+        return vec;
+    }
+};
+
+// Driver Code Starts.
+int main()
+{
+    string s, t;
+    cin >> s >> t;
+    Solution ob;
+    vector<string> ans = ob.all_longest_common_subsequences(s, t);
+    for (auto i : ans)
+        cout << i << " ";
+    cout << "\n";
+
+    return 0;
+}
+
+/*
+testcase
+Input: s = abaaa, t = baabaca
+Output: aaaa abaa baaa
+*/
+
+/*
+str1 = abcwedgh
+str2 = abghoepdcw
+o/p = abcw abed abgh 
+*/
