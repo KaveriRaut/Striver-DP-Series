@@ -1,0 +1,106 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Intuition: Print the single LCS string directly
+// 1) create dp table for LCS using the tabulation method
+// 2) backtrack that dp table 
+// 3) collect one-by-one matching leters and return the LCS string
+
+// during backtraking the dp table
+// if (matched) => add that letter to ans, and move to diagonal cell i.e. to [i-1,j-1]
+// if (not matched) => dont add any letter and move to max of left or up cell i.e. max(cell[i-1,j],cell[i,j-1]);
+
+// function to print single longest common subsequence
+class Solution
+{
+public:
+    // Tabulation + backetracking :  Time:O(n*m) ~ polynomial    Space:O(n*m)
+    string print_lcs(int n, int m, string str1, string str2)
+    {
+        //**************************tabulation code begins**************************************
+        vector<vector<int>> dp(n+1,vector<int>(m+1,0)); //dp[n+1][m+1] size => index shifted to right by 1
+        //base case filling dp
+        for(int i=0;i<=n;i++)
+        {
+            for(int j=0;j<=m;j++)
+            {
+                if(i==0 || j==0)
+                    dp[i][j]=0;
+            }
+        }
+        //remaining dp table filling
+        for(int i=1;i<=n;i++)
+        {
+            for(int j=1;j<=m;j++)
+            {
+                //if matched
+                if(str1[i-1]==str2[j-1]) //(i,j) index of dp=>points to char at (i-1,j-1) in strings
+                {
+                    dp[i][j] = 1+dp[i-1][j-1];
+                }
+                else //else if notMatched
+                {
+                    dp[i][j] = max(dp[i-1][j],dp[i][j-1]);
+                }
+            }
+        }
+        //creation of LCS dp table is done
+        //length of LCS == dp[n][m]
+
+        //******************Now backtracking for printing the LCS string******************************
+        int i=n, j=m;
+        string ans = "";
+        while(i>=0 && j>=0)
+        {
+            //if matched
+            if(str1[i-1]==str2[j-1]) //(i,j) index of dp=>points to char at (i-1,j-1) in strings
+            {
+                //add letter to ans & move to diagonal cell [i-1,j-1]
+                ans.push_back(str1[i-1]);
+                i--;
+                j--;
+            }
+            else //if notMatched => dont add letter, find max of (up cell [i,j-1]) or (left cell[i-1,j])
+            {
+                if(dp[i-1][j]>dp[i][j-1]) //max is left => move to left [i-1]
+                {
+                    i--;
+                }
+                else //else wise => max is up => move to up [j-1]
+                {
+                    j--;
+                }
+            }
+        }
+        reverse(ans.begin(),ans.end()); //reverse the LCS string obtained at last****
+        return ans;
+    }
+};
+
+// Driver Code Starts.
+int main()
+{
+    int n, k, x, y;
+    cin >> x >> y; // Take size of both the strings as input
+    string s1, s2;
+    cin >> s1 >> s2; // Take both the string as input
+    Solution ob;
+    cout << "Tabulation + backtracking: " << ob.print_lcs(x, y, s1, s2) << endl;
+    return 0;
+}
+
+/*
+Testcase1:
+A = 6, B = 6
+str1 = ABCDGH
+str2 = AEDFHR
+Output: ADH
+*/
+
+/*
+Testcase2:
+A = 4, B = 5
+str1 = acbf
+str2 = dcbef
+Output: cbf
+*/
