@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+//Intuition: Longest common substring
+//Tabulation approach to solve is same as 'Longest common subsequence problem' => with slight modification change
+//1) if (match) => dp[i][j] = 1+dp[i-1][j-1];   .....(same)
+//2) if (notMached) => dp[i][j] = 0;   .....(slight change)
+//3) return the maximum value from entire dp[][] table created => is our answer of longest common substring
+class Solution
+{
+public:
+
+    // Tabulation : bottom up approach : move idx1 and idx2 from 0 to last index of strings
+    //  Time:O(n*m)    Space:O(n*m)
+    int longestCommonSubstr(string str1, string str2, int n, int m)
+    {
+        // using tabulation approach
+        vector<vector<int>> dp(n + 1, vector<int>(m + 1, 0));
+        // base case filling same as privious example
+        for (int i = 0; i <= n; i++)
+        {
+            for (int j = 0; j <= m; j++)
+            {
+                if (i == 0 || j == 0)
+                {
+                    dp[i][j] = 0;
+                }
+            }
+        }
+        int maxi = 0;
+        // filling remaining dp table
+        for (int i = 1; i <= n; i++)
+        {
+            for (int j = 0; j <= m; j++)
+            {
+                // if matched => add 1 + call_recc(i-1,j-1)
+                if (str1[i - 1] == str2[j - 1]) // shifted indexes in string and sp
+                {
+                    dp[i][j] = 1 + dp[i - 1][j - 1];
+                    // during this processing only, find maximum and store it
+                    maxi = max(maxi, dp[i][j]);
+                }
+                else // if (notMachted) => put 0 directly
+                {
+                    dp[i][j] = 0;
+                }
+            }
+        }
+        // taking the maximum from entire dp table => will be out longest common substring
+        return maxi;
+    }
+};
+
+
+int main()
+{
+    int n, m;
+    cin >> n >> m;
+    string s1, s2;
+    cin >> s1 >> s2;
+    Solution ob;
+
+    cout << ob.longestCommonSubstr(s1, s2, n, m) << endl;
+}
