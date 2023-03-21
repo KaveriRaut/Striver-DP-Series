@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Intuition:
+// 1) we need to find the length of 'longest common subsequence LCS' (i.e. Len) in str1 and str2 => using Tabulation_LCS() function
+// 2) now we can have => 'deletions required from str1' = (str1.length - lcs_Len)
+// 3) 'insertion required into str1' = (str2.length - lcs_Len)
+// 4) total no. of min-insertions required to convert str1 into str2 = no. of deletions + no. of insertions
+// min-operation in convertion = (str1.size()-lcs_len) + (str2.size()-lcs_len);
+
+class Solution
+{
+public:
+    // function to return the length of 'LCS:longest common subseuence'
+    // Tabulation : Time:O(n*m) Space:O(n*m)
+    int tabulation_lcs(int n, int m, string str1, string str2)
+    {
+        // tabulation dp
+        vector<vector<int>> dp(n + 1, vector<int>(m + 1, 0));
+        // base case is already satisfied => putting dp at (i==0||j==0) in dp matrix
+        // traverse dp to fillup
+        for (int N = 1; N <= n; N++)
+        {
+            for (int M = 1; M <= m; M++)
+            {
+                // matched
+                if (str1[N - 1] == str2[M - 1])
+                {
+                    dp[N][M] = 1 + dp[N - 1][M - 1];
+                }
+                else // not matched
+                {
+                    dp[N][M] = 0 + max(dp[N - 1][M], dp[N][M - 1]);
+                }
+            }
+        }
+        return dp[n][m]; // return length of longest common subseq from last cell of dp
+    }
+
+    // to return total min-oprations required to convert str1 inot str2
+    int minOperations(string str1, string str2)
+    {
+        // 1) size of both strings given for conversion
+        int str1_len = str1.size();
+        int str2_len = str2.size();
+        // 2)get length of longest common subsequence lcs_len from both strings
+        int lcs_len = tabulation_lcs(str1_len, str2_len, str1, str2);
+        // 3)finding total deletions from string1 required
+        int total_deletions = (str1_len - lcs_len);
+        // 4)finding total insertions in string1 required
+        int total_insetions = (str2_len - lcs_len);
+        // 3)total min-operations = total deletions + total insertions
+        int total_operations = total_deletions + total_insetions;
+        return total_operations;
+    }
+};
+
+// Driver Code Starts.
+int main()
+{
+    string s1, s2;
+    cin >> s1 >> s2;
+
+    Solution ob;
+    cout << ob.minOperations(s1, s2) << "\n";
+    return 0;
+}
+
+/*
+testcase:
+str1 = 'abcd' => len1=4
+str2 = 'anc'  => len2=3
+LCS = 'ac'    => lcs_len=2
+deletion required = 2 => need to delete 'bd' from str1
+insertion required = 1 => need to delete 'c' into str1
+so now total_operation = 3 => to convert str1 (abcd) into str2 (anc)
+total_operation = (len1-lcs_len)+(len2-lcs_len);
+o/p = 3
+*/
