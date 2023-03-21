@@ -1,0 +1,91 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Intuition :
+// 1) get the length of given string (n)
+// 2) find the length of 'longest palindromic subsequence' from given string i.e. len
+// => (refer DP28 problem find using LCS method)
+// 3) copy and paste in reverse on other half part of palindrome gives minimum no. of insertion requred
+// that minimum insertion = (n - len); //this is our answer
+
+// study Example:
+// str = abcaa => // n = 5
+// longest pali_subseq = 'a a a' => //len=3
+// copy and paste in reverse on other half part of palindrome gives
+//  => a      a      a : longest palindrome
+//  => a 'bc' a      a : remaining part to copy
+//  => a 'bc' a 'cb' a : paste it in reverse on other handside
+// min insertion to make palindrome = (n-len) = (5-3) = 2 //
+
+class Solution
+{
+public:
+    // function to return the length of 'LCS:longest common subseuence'
+    // Tabbulation : Time:O(n*m) Space:O(n*m)
+    // can use any approach to solve LCS problem here from DP28
+    int tabulation_lcs(int n, int m, string str1, string str2)
+    {
+        // tabulation dp
+        vector<vector<int>> dp(n + 1, vector<int>(m + 1, 0));
+        // base case is already satisfied => putting dp at (i==0||j==0) in dp matrix
+        // traverse dp to fillup
+        for (int N = 1; N <= n; N++)
+        {
+            for (int M = 1; M <= m; M++)
+            {
+                // matched
+                if (str1[N - 1] == str2[M - 1])
+                {
+                    dp[N][M] = 1 + dp[N - 1][M - 1];
+                }
+                else // not matched
+                {
+                    dp[N][M] = 0 + max(dp[N - 1][M], dp[N][M - 1]);
+                }
+            }
+        }
+        return dp[n][m]; // return length of longest common subseq from last cell of dp
+    }
+
+    // main function to return the min-insertion count to make palindrome
+    int countMin(string str)
+    {
+        // 1) find length of curr. string
+        int n = str.size();
+        // 2)find length of longest palindromic sunsequence
+        string rev_str = "";
+        for (int i = n - 1; i >= 0; i--)
+        {
+            rev_str += str[i];
+        }
+        int len = tabulation_lcs(n, n, str, rev_str); // send str and itd reverse to get longest palindromic subseq
+        // 3)return the min-insertion to make palindrome
+        return (n - len);
+    }
+};
+
+// Driver Code Starts.
+int main()
+{
+    string str;
+    cin >> str;
+    Solution ob;
+    cout <<"min-insertion required: "<< ob.countMin(str) << endl;
+    return 0;
+}
+
+/*
+testcase1:
+str = 'abcaa'
+o/p = 2 => as we only require the count
+to make palindrome as 'a "bc" a "cb" a' => need 2 insertion of extra "cb"
+*/
+
+/*
+testcase2:
+str = 'abcadpa'
+o/p = 2 => as we only require the count
+// to make palindrome as [a "pd" bc a "cb" dp a] => need 4 insertion of extra "pd" and "cb" to make = [a'pd'bca'cb'dpa]
+// left side ka 'bc' is copy and paste in reverse to right hand side as 'cb'
+// right side ka 'dp' is copy and paste in reverse to left hand side as 'pd'
+*/
