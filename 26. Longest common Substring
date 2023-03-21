@@ -2,17 +2,68 @@
 using namespace std;
 
 //Intuition: Longest common substring
-//Tabulation approach to solve is same as 'Longest common subsequence problem' => with slight modification change
+//Tabulation approach easy to solve is same as 'Longest common subsequence problem' => with slight modification change
 //1) if (match) => dp[i][j] = 1+dp[i-1][j-1];   .....(same)
 //2) if (notMached) => dp[i][j] = 0;   .....(slight change)
 //3) return the maximum value from entire dp[][] table created => is our answer of longest common substring
+
 class Solution
 {
 public:
 
+    // Memoization approach : Time:O(n*m)  Space:O(n*m)+O(n+m) => dp space + rec stack space
+    int memoize(vector<vector<int>> &dp,int i,int j,string str1, string str2)
+    {
+        //base case 
+        if(i<0 || j<0)
+        {
+            return 0;
+        }
+        //pre checking the dp table 
+        if(dp[i][j]!=-1)
+        {
+            return dp[i][j];
+        }
+        //store the ans in variable first by calling all 3 recc_calls => at end assign it to dp
+        int ans = INT_MIN;
+        //if matched => +1 to count length
+        if(str1[i]==str2[j])
+        {
+            ans = 1+memoize(dp,i-1,j-1,str1,str2);
+        }
+        else //not matched => put 0 to length directly
+        {
+            ans = 0;
+        }
+        //call remaining 2 possible choices to find ans
+        memoize(dp,i-1,j,str1,str2); //str1 shrinnk
+        memoize(dp,i,j-1,str1,str2); //str2 is shrink
+        return dp[i][j] = ans; //store the ans in dp at last
+    }
+    int longestCommonSubstr1 (string str1, string str2, int n, int m)
+    {
+        //memoization dp[n][m]
+        vector<vector<int>> dp(n,vector<int>(m,-1));
+        //call the memoiza function to fill up dp[][]
+        memoize(dp,n-1,m-1,str1,str2); //call for last index of strings i.e. [n-1,m-1]
+        //now iterate over the dp table to find largest length of substring
+        int maxi = 0;
+        for(int i=0;i<n;i++)
+        {
+            for(int j=0;j<m;j++)
+            {
+                if(maxi<dp[i][j])
+                {
+                    maxi = dp[i][j];
+                }
+            }
+        }
+        return maxi;
+    }
+
     // Tabulation : bottom up approach : move idx1 and idx2 from 0 to last index of strings
     //  Time:O(n*m)    Space:O(n*m)
-    int longestCommonSubstr(string str1, string str2, int n, int m)
+    int longestCommonSubstr2 (string str1, string str2, int n, int m)
     {
         // using tabulation approach
         vector<vector<int>> dp(n + 1, vector<int>(m + 1, 0));
@@ -60,7 +111,8 @@ int main()
     cin >> s1 >> s2;
     Solution ob;
 
-    cout <<"By Tabulation: " << ob.longestCommonSubstr(s1, s2, n, m) << endl;
+    cout <<"By Memoization: " << ob.longestCommonSubstr1(s1, s2, n, m) << endl;
+    cout <<"By Tabulation: " << ob.longestCommonSubstr2(s1, s2, n, m) << endl;
 }
 
 /*
